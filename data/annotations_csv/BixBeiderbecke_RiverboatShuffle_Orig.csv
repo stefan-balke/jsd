@@ -1,11 +1,11 @@
 region_start;region_end;label;instrument
 0.0;0.236734693;silence;
-0.236734693;4.669387754;intro;cor,cl,tb,as,ts,p,g,dr
-4.669387755;31.999999999;theme_01_01;cor,cl,ts,as,tb,p,g,dr
-32.0;58.840816325999995;theme_01_02;cor,cl,ts,as,tb,p,g,dr
+0.236734693;4.669387755;intro;cor,cl,tb,as,ts,p,g,dr
+4.669387755;32.0;theme_01_01;cor,cl,ts,as,tb,p,g,dr
+32.0;58.840816326;theme_01_02;cor,cl,ts,as,tb,p,g,dr
 58.840816326;86.073469387;solo_01_01;s_cor,b_p,b_g,b_dr
-86.073469387;113.63265306000001;solo_01_02;s_cor,b_ts,b_as,b_tb,b_cl,b_p,b_g
-113.632653061;140.73469387699998;solo_02_01;s_cl,b_p,b_g,b_dr
-140.734693877;168.29387755000002;solo_02_02;s_cl,b_cor,b_tb,b_cl,b_ts,b_as,b_p,b_g,b_dr
+86.073469387;113.632653061;solo_01_02;s_cor,b_ts,b_as,b_tb,b_cl,b_p,b_g
+113.632653061;140.734693877;solo_02_01;s_cl,b_p,b_g,b_dr
+140.734693877;168.293877551;solo_02_02;s_cl,b_cor,b_tb,b_cl,b_ts,b_as,b_p,b_g,b_dr
 168.293877551;188.081632653;theme_02_01;cor,cl,tb,ts,as,p,g,dr
 188.081632653;190.66666666666663;silence;

@@ -1,8 +1,8 @@
 region_start;region_end;label;instrument
 0.0;0.255419501;silence;
-0.255419501;5.201269841;intro;cl,cor,tb
-5.24770975;46.184489795;theme_01_01;cor,cl,tb,b
-46.230929705;87.16770975;solo_01_01;s_p,b_dr
-87.237369614;129.45124716499998;solo_02_01;s_cl,s_cor,b_p,b_b,b_dr
+0.255419501;5.24770975;intro;cl,cor,tb
+5.24770975;46.230929705;theme_01_01;cor,cl,tb,b
+46.230929705;87.237369614;solo_01_01;s_p,b_dr
+87.237369614;129.497687074;solo_02_01;s_cl,s_cor,b_p,b_b,b_dr
 129.497687074;174.149659863;theme_02_01;cl,cor,tb,p,b,dr
 174.149659863;176.36;silence;

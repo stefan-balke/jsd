@@ -39,10 +39,8 @@ def convert_to_regions(annotation, track_name, gap_threshold=1.0):
     # create empty pandas dataframe
     out_df = pd.DataFrame(None, columns=['region_start', 'region_end', 'label', 'instrument'])
 
-    previous_end = 0
-
     # loop over all rows from the annotations
-    for _, cur_row in annotation.iterrows():
+    for cur_idx, cur_row in annotation.iterrows():
         # split labels into instruments and labels
         labels_raw = cur_row['label'].replace(' ', '').split(',')
         labels_raw = list(filter(None, labels_raw))
@@ -55,19 +53,17 @@ def convert_to_regions(annotation, track_name, gap_threshold=1.0):
 
         # convert the duration column into segment_end
         cur_start = float(cur_row['region_start'])
-        cur_end = cur_start + float(cur_row['region_dur'])
 
-        # check if region start is close to region end from previous segment
-        try:
-            gap = (cur_start - previous_end)
-            assert abs(cur_start - previous_end) < gap_threshold
-        except AssertionError:
-            print('{}: Annotation gap >{} detected: {}.'.format(track_name, gap_threshold, gap))
-
-        previous_end = cur_end
+        # for the last segment we take the annotated end,
+        # otherwise we take the start position of the next segment
+        # to close any annotation gaps
+        if cur_idx + 1 <= annotation.index[-1]:
+            cur_end_adj = float(annotation.loc[cur_idx + 1, 'region_start'])
+        else:
+            cur_end_adj = cur_start + float(cur_row['region_dur'])
 
         # create dataframe for new row data and append it to out_df
-        row = pd.DataFrame([[cur_start, cur_end, label, instruments]],
+        row = pd.DataFrame([[cur_start, cur_end_adj, label, instruments]],
                            columns=out_df.columns.values)
 
         out_df = out_df.append(row)
