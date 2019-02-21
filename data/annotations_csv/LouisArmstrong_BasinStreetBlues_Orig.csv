@@ -1,0 +1,10 @@
+region_start;region_end;label;instrument
+0.0;0.139319727;silence;
+0.139319727;8.428843536;intro;dr
+8.452063492;42.283537414;theme_01_01;cor,tb,cl,dr,bjo,dr
+42.283537414;77.415328797;solo_01_01;s_cor,b_tb,b_bjo,b_p,b_dr
+77.415328798;112.756099773;solo_02_01;s_voc,b_voc,b_p
+112.75609977299999;148.584489795;solo_03_01;s_p,s_cor,b_cl,b_tb,b_bjo,b_p,b_dr
+148.584489795;182.067664398;solo_03_02;s_cor,s_cl,b_tb,b_bjo,b_p,b_dr
+182.06766439900002;194.28136054400002;outro;cor,cl,tb,bjo,p,dr
+194.28136054400002;195.96;silence;

@@ -1,0 +1,6 @@
+region_start;region_end;label;instrument
+0.0;0.464399092;silence;
+0.464399092;13.74621315;intro;p,b,dr
+13.746213151;116.935691609;theme_01_01;vib,p,b,dr
+116.935691609;189.753469386;solo_01_01;s_vib,b_p,b_b,b_dr
+189.753469386;193.94666666666663;silence;

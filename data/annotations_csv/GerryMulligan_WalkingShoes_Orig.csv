@@ -1,0 +1,7 @@
+region_start;region_end;label;instrument
+0.0;0.348299319;silence;
+0.348299319;58.119546484;theme_01_01;tp,bs,b,dr
+58.142766439;113.824217686;solo_01_01;s_bs,b_b,b_dr
+113.870657596;169.319909296;solo_02_01;s_tp,s_bs,b_b,b_dr
+169.38956916;190.542947844;outro;tp,bs,b,dr
+190.542947844;192.13333333333333;silence;

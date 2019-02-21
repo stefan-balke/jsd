@@ -1,0 +1,7 @@
+0.139319727	1	8.289523809	intro, dr
+8.452063492	1	33.831473922	theme_01_01, cor, tb, cl, dr, bjo, dr
+42.283537414	1	35.131791383	solo_01_01, s_cor, b_tb, b_bjo, b_p, b_dr
+77.415328798	1	35.340770975	solo_02_01, s_voc, b_voc, b_p
+112.756099773	1	35.828390022	solo_03_01, s_p, s_cor, b_cl, b_tb, b_bjo, b_p, b_dr
+148.584489795	1	33.483174603	solo_03_02, s_cor, s_cl, b_tb, b_bjo, b_p, b_dr
+182.067664399	1	12.213696145	outro, cor, cl, tb, bjo, p, dr

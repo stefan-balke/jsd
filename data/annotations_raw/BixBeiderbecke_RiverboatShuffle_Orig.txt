@@ -1,0 +1,8 @@
+0.236734693	1	4.432653061	intro, cor, cl, tb, as, ts, p, g, dr
+4.669387755	1	27.330612244	theme_01_01, cor, cl, ts, as, tb, p, g, dr
+32.000000000	1	26.840816326	theme_01_02, cor, cl, ts, as, tb , p, g, dr
+58.840816326	1	27.232653061	solo_01_01, s_cor, b_p, b_g, b_dr
+86.073469387	1	27.559183673	solo_01_02, s_cor, b_ts, b_as, b_tb, b_cl, b_p, b_g, 
+113.632653061	1	27.102040816	solo_02_01, s_cl, b_p, b_g, b_dr
+140.734693877	1	27.559183673	solo_02_02, s_cl, b_cor, b_tb, b_cl, b_ts, b_as, b_p, b_g, b_dr
+168.293877551	1	19.787755102	theme_02_01, cor, cl, tb, ts, as, p, g, dr
