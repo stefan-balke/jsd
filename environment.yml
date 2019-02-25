@@ -11,3 +11,5 @@ dependencies:
     - matplotlib
     - tqdm
     - seaborn
+    - scikit-learn
+    - yaml
