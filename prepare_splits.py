@@ -16,7 +16,7 @@ from sklearn.model_selection import GroupKFold, train_test_split
 
 def main():
     RANDOM_STATE = 4711
-    N_FOLDS = 10
+    N_FOLDS = 5
     PATH_DATA = 'data'
     PATH_X = os.path.join(PATH_DATA, 'features_wjd_audio_solos')
     PATH_y = os.path.join(PATH_DATA, 'annotations_csv')
@@ -55,7 +55,7 @@ def main():
         cur_fold_test = cur_test_idx
 
         # further split training data in train and validation
-        cur_fold_train, cur_fold_val = train_test_split(cur_train_idx, test_size=0.20, random_state=RANDOM_STATE)
+        cur_fold_train, cur_fold_val = train_test_split(cur_train_idx, test_size=0.10, random_state=RANDOM_STATE)
 
         print('Fold %02d:\n n_train: \t%03d\n n_test: \t%03d\n n_val: \t%03d'
               % (cur_fold, len(cur_fold_train), len(cur_fold_test), len(cur_fold_val)))
