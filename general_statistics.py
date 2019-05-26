@@ -115,7 +115,7 @@ def hist_solo_choruses_per_instrument(track_db, path_output):
     plt.savefig(os.path.join(path_output, 'hist_solo_choruses_per_instrument.pdf'), bbox_inches='tight')
 
 
-def plot_hist_solo_per_instr(track_db, path_output):
+def plot_hist_solos_per_instr(track_db, path_output):
 
     track_db_mod = track_db
     # create empty index list
@@ -142,7 +142,7 @@ def plot_hist_solo_per_instr(track_db, path_output):
     ax.set_ylabel('#Solos')
     sns.despine()
     plt.tight_layout()
-    plt.savefig(os.path.join(path_output, 'nr_solos_per_instrument.pdf'), bbox_inches='tight')
+    plt.savefig(os.path.join(path_output, 'hist_solos_per_instr.pdf'), bbox_inches='tight')
 
 
 def plot_length_solos_per_instrument(track_db, path_output):
@@ -273,7 +273,7 @@ if __name__ == '__main__':
     plot_hist_solos_per_track(jsd_track_db, PATH_OUTPUT)
     hist_solo_choruses_per_instrument(jsd_track_db, PATH_OUTPUT)
 
-    # plot_hist_solo_per_instr(track_db, PATH_OUTPUT)
+    # plot_hist_solos_per_instr(jsd_track_db, PATH_OUTPUT)
     # plot_length_solos_per_instrument(track_db, PATH_OUTPUT)
     # plot_average_length_solos_per_instrument(track_db, PATH_OUTPUT)
     # plot_average_nr_solos_per_instrument(track_db, PATH_OUTPUT, nr_tracks)
