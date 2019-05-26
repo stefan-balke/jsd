@@ -1,4 +1,4 @@
-region_start;region_end;label;instrument
+segment_start;segment_end;label;instrument
 0.0;1.2074376409999998;silence;
 1.2074376409999998;6.455147392000001;intro;b
 6.455147392000001;24.055873015;theme_01_01;tp,ts,p,b,dr

@@ -1,4 +1,4 @@
-region_start;region_end;label;instrument
+segment_start;segment_end;label;instrument
 0.0;0.325079365;silence;
 0.325079365;21.292698412;theme_01_01;tp,ts,p,b,dr
 21.292698412;41.726258503000004;theme_01_02;tp,ts,p,b,dr
@@ -6,7 +6,7 @@ region_start;region_end;label;instrument
 61.347120181;80.596462585;solo_01_02;s_tp,b_p,b_b,b_dr
 80.596462585;99.68326530600001;solo_01_03;s_tp,b_p,b_b,b_dr
 99.68326530600001;118.607528344;solo_02_01;s_ts,b_p,b_b,b_dr
-118.607528344;137.160272108;solo_02_02;s_ts,b_p,b_b,b_dr
+118.607528344;137.160272108;solo_02_01;s_ts,b_p,b_b,b_dr
 137.160272108;155.620136054;solo_03_01;s_p,b_b,b_dr
 155.620136054;173.871020408;solo_03_02;s_p,b_b,b_dr
 173.871020408;191.79682539599997;solo_04_01;s_b

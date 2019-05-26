@@ -10,8 +10,8 @@ import tqdm
 def add_silence(annotation, track_dur, track_name):
     # determine the end of the last region and add a silence segment
     # from the end of the last segement to the end of the file
-    end_last_region = annotation['region_start'].values[len(annotation) - 1] \
-                      + annotation['region_dur'].values[len(annotation) - 1]
+    end_last_region = annotation['segment_start'].values[len(annotation) - 1] \
+                      + annotation['segment_dur'].values[len(annotation) - 1]
     end_silence = pd.DataFrame([[end_last_region, track_dur - end_last_region, 'silence']],
                                columns=annotation.columns.values)
     end_silence = end_silence.set_index(end_silence.index  + len(annotation) + 1)
@@ -20,11 +20,11 @@ def add_silence(annotation, track_dur, track_name):
     annotation = annotation.set_index(annotation.index + 1)
 
     try:
-        assert float(annotation['region_start'].values[0]) >= 0
+        assert float(annotation['segment_start'].values[0]) >= 0
     except AssertionError:
         print('{}: Region starting point <0 detected.'.format(track_name))
 
-    start = pd.DataFrame([[0, annotation['region_start'].values[0], 'silence']],
+    start = pd.DataFrame([[0, annotation['segment_start'].values[0], 'silence']],
                          columns=annotation.columns.values)
 
     # add both segments to the annotation file, indexes are set for correct segment position
@@ -37,7 +37,7 @@ def add_silence(annotation, track_dur, track_name):
 
 def convert_to_regions(annotation, track_name, gap_threshold=1.0):
     # create empty pandas dataframe
-    out_df = pd.DataFrame(None, columns=['region_start', 'region_end', 'label', 'instrument'])
+    out_df = pd.DataFrame(None, columns=['segment_start', 'segment_end', 'label', 'instrument'])
 
     # loop over all rows from the annotations
     for cur_idx, cur_row in annotation.iterrows():
@@ -52,15 +52,15 @@ def convert_to_regions(annotation, track_name, gap_threshold=1.0):
         instruments = ','.join(labels_raw[1:])
 
         # convert the duration column into segment_end
-        cur_start = float(cur_row['region_start'])
+        cur_start = float(cur_row['segment_start'])
 
         # for the last segment we take the annotated end,
         # otherwise we take the start position of the next segment
         # to close any annotation gaps
         if cur_idx + 1 <= annotation.index[-1]:
-            cur_end_adj = float(annotation.loc[cur_idx + 1, 'region_start'])
+            cur_end_adj = float(annotation.loc[cur_idx + 1, 'segment_start'])
         else:
-            cur_end_adj = cur_start + float(cur_row['region_dur'])
+            cur_end_adj = cur_start + float(cur_row['segment_dur'])
 
         # create dataframe for new row data and append it to out_df
         row = pd.DataFrame([[cur_start, cur_end_adj, label, instruments]],
@@ -96,7 +96,7 @@ def main():
             break
 
         # create pandas dataframe and read raw annotations
-        col_names = ['region_start', 'region_dur', 'label']
+        col_names = ['segment_start', 'segment_dur', 'label']
         cur_annotation = pd.read_csv(cur_annotation_file, names=col_names, usecols=[0, 2, 3], sep='\t')
 
         # read the duration from the meta data
