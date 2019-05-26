@@ -1,50 +1,102 @@
 import os
 import tqdm
+import numpy as np
 import pandas as pd
+import re
 
 
-def create_track_db(annotation_files):
+def load_jsd(path_annotation_files):
+    """Read JSD annotations from CSV files.
 
-    track_db = pd.DataFrame(None)
+    Each row in the output is an annotation instance.
 
-    for cur_path_anno in tqdm.tqdm(annotation_files):
+    Parameters
+    ----------
+    path_annotation_files : list
+        List with pathes of the annotation CSVs
+
+    Returns
+    -------
+    annotations : pd.DataFrame
+        All annotations as a pandas DataFrame.
+        Columns: ['index', 'region_start', 'region_end', 'label', 'instrument',
+                  'track_name', 'segment_class', 'segment_class_id', 'region_chorus_id',
+                  'instrument_solo', 'instrument_acc']
+    """
+
+    annotations = pd.DataFrame(None)
+
+    # load CSV files
+    for cur_path_anno in tqdm.tqdm(path_annotation_files, desc='Loading Annotations'):
 
         track_name = os.path.splitext(os.path.basename(cur_path_anno))[0]
 
         # read annotation file
-        annotations = pd.read_csv(cur_path_anno, usecols=[0, 1, 2, 3], sep=';')
+        cur_csv = pd.read_csv(cur_path_anno, usecols=[0, 1, 2, 3], sep=';')
+        cur_csv['track_name'] = track_name
 
-        # create empty index list
-        idx_list = []
+        annotations = annotations.append(cur_csv)
 
-        # find index of not needed rows (non solo parts)
-        for cur_index, cur_annotation in annotations.iterrows():
-            if 'silence' in cur_annotation['label'] or 'intro' in cur_annotation['label'] \
-                                                    or 'outro' in cur_annotation['label'] \
-                                                    or 'theme' in cur_annotation['label'] \
-                                                    or 'all' in cur_annotation['instrument']:
-                idx_list = idx_list + [cur_index]
+    annotations = annotations.reset_index()
+    annotations['segment_class'] = ''
+    annotations['segment_class_id'] = np.nan
+    annotations['region_chorus_id'] = np.nan
+    annotations['instrument_solo'] = ''
+    annotations['instrument_acc'] = ''
 
-        # drop the rows which are not needed
-        annotations = annotations.drop(annotations.index[idx_list])
+    # Parse annotations and expand metadata
+    for cur_index, cur_row in annotations.iterrows():
+        # set segment_class and ids
+        if (
+                'silence' in cur_row['label'] or
+                'intro' in cur_row['label'] or
+                'outro' in cur_row['label']
+        ):
+            annotations.at[cur_index, 'segment_class'] = cur_row['label']
 
-        annotations['trackname'] = track_name
-        # add dataframe of one track to dataframe of all songs
-        # if track_name != 'JohnColtrane_GiantSteps_Orig':
-        track_db = track_db.append(annotations)
+        if 'solo' in cur_row['label'] or 'theme' in cur_row['label']:
+            try:
+                matches = re.findall(r'(\w*)_(\d{2})_(\d{2})', cur_row['label'])[0]
+                annotations.at[cur_index, 'segment_class'] = matches[0]
+                annotations.at[cur_index, 'segment_class_id'] = int(matches[1])
+                annotations.at[cur_index, 'region_chorus_id'] = int(matches[2])
+            except IndexError:
+                print('Problem parsing: {}'.format(cur_row['track_name']))
+                print(cur_row)
 
-    track_db = track_db.reset_index()
+        if 'solo' in cur_row['label']:
+            # set solo instrument and accompaniment
+            instruments = cur_row['instrument'].split(',')
+            instr_solo = []
+            instr_acc = []
 
-    # extract the first string between _ and (, or end) of str
-    track_db['instrument'] = track_db['instrument'].str.extract('(?<=\_)(.*?)(?=\,|$)')
+            # check if instrument is a solo instrument or accompaniment
+            for cur_instr in instruments:
+                try:
+                    indicator, cur_instr_str = cur_instr.split('_')
+                except ValueError:
+                    print('Detected mal-formatted label field.')
+                    print(cur_row)
 
-    # convert *1 and *2 to *
-    for cur_index, cur_annotation in track_db.iterrows():
-        if cur_annotation['instrument'] == 'ts1' or cur_annotation['instrument'] == 'ts2':
-            track_db.loc['instrument', cur_index] = 'ts'
-        if cur_annotation['instrument'] == 'tp1' or cur_annotation['instrument'] == 'tp2':
-            track_db.loc['instrument', cur_index] = 'tp'
-        if cur_annotation['instrument'] == 'as1' or cur_annotation['instrument'] == 'as2':
-            track_db.loc['instrument', cur_index] = 'as'
+                # sometimes we have more than a single ts
+                # but this is not helpful for the instrument classes,
+                # thus we normalize
+                if cur_instr_str == 'ts1' or cur_instr_str == 'ts2':
+                    cur_instr_str = 'ts'
 
-    return track_db
+                if cur_instr_str == 'tp1' or cur_instr_str == 'tp2':
+                    cur_instr_str = 'tp'
+
+                if cur_instr_str == 'as1' or cur_instr_str == 'as2':
+                    cur_instr_str = 'as'
+
+                if indicator == 's':
+                    instr_solo.append(cur_instr_str)
+
+                if indicator == 'b':
+                    instr_acc.append(cur_instr_str)
+
+            annotations.at[cur_index, 'instrument_solo'] = ','.join(instr_solo)
+            annotations.at[cur_index, 'instrument_acc'] = ','.join(instr_acc)
+
+    return annotations
