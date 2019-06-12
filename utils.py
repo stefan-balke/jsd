@@ -13,15 +13,15 @@ def load_jsd(path_annotation_files):
     Parameters
     ----------
     path_annotation_files : list
-        List with pathes of the annotation CSVs
+        List with paths of the annotation CSVs
 
     Returns
     -------
     annotations : pd.DataFrame
         All annotations as a pandas DataFrame.
         Columns: ['index', 'region_start', 'region_end', 'label', 'instrument',
-                  'track_name', 'segment_class', 'segment_class_id', 'region_chorus_id',
-                  'instrument_solo', 'instrument_acc']
+                  'track_name', 'segment_class', 'segment_class_id', 'segment_chorus_id',
+                  'instrument_solo', 'instrument_acc', 'mixed_solo']
     """
 
     annotations = pd.DataFrame(None)
@@ -40,9 +40,10 @@ def load_jsd(path_annotation_files):
     annotations = annotations.reset_index()
     annotations['segment_class'] = ''
     annotations['segment_class_id'] = np.nan
-    annotations['region_chorus_id'] = np.nan
+    annotations['segment_chorus_id'] = np.nan
     annotations['instrument_solo'] = ''
     annotations['instrument_acc'] = ''
+    annotations['mixed_solo'] = np.nan
 
     # Parse annotations and expand metadata
     for cur_index, cur_row in annotations.iterrows():
@@ -59,7 +60,7 @@ def load_jsd(path_annotation_files):
                 matches = re.findall(r'(\w*)_(\d{2})_(\d{2})', cur_row['label'])[0]
                 annotations.at[cur_index, 'segment_class'] = matches[0]
                 annotations.at[cur_index, 'segment_class_id'] = int(matches[1])
-                annotations.at[cur_index, 'region_chorus_id'] = int(matches[2])
+                annotations.at[cur_index, 'segment_chorus_id'] = int(matches[2])
             except IndexError:
                 print('Problem parsing: {}'.format(cur_row['track_name']))
                 print(cur_row)
@@ -99,4 +100,40 @@ def load_jsd(path_annotation_files):
             annotations.at[cur_index, 'instrument_solo'] = ','.join(instr_solo)
             annotations.at[cur_index, 'instrument_acc'] = ','.join(instr_acc)
 
+            # is it a mixed solo, e.g., trading 4s...
+            if len(instr_solo) == 1:
+                annotations.at[cur_index, 'mixed_solo'] = 0
+
+            if len(instr_solo) > 1:
+                annotations.at[cur_index, 'mixed_solo'] = 1
+
+    # add part duration as additional field
+    annotations['segment_dur'] = annotations['segment_end'] - annotations['segment_start']
+
     return annotations
+
+
+def filter_db_by_solo(track_db):
+    # work on copy
+    track_db_filtered = track_db.copy(deep=True)
+    track_db_filtered = track_db_filtered[track_db_filtered['segment_class'] == 'solo']  # only consider solos
+
+    # init solos df
+    track_db_solos = pd.DataFrame(columns=track_db_filtered.columns.to_list())
+
+    # group by track_name
+    for _, cur_track_df in track_db_filtered.groupby('track_name'):
+        groups_solo = cur_track_df.groupby('segment_class_id')
+        solos_first = groups_solo.first()
+        solos_last = groups_solo.last()
+
+        # keep solos_first as basis and update segment_end
+        solos_merge = solos_first
+        solos_merge['segment_end'] = solos_last['segment_end']
+
+        track_db_solos = track_db_solos.append(solos_merge, ignore_index=True)
+
+    # update durations
+    track_db_solos['segment_dur'] = track_db_solos['segment_end'] - track_db_solos['segment_start']
+
+    return track_db_solos
