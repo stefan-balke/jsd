@@ -293,6 +293,22 @@ def plot_boxplot_solodur_per_instrument(track_db, path_output):
     plt.savefig(os.path.join(path_output, 'boxplot_solodur_per_instrument.pdf'), bbox_inches='tight')
 
 
+def general_statistics(jsd_track_db, path_output):
+    """Statistics per Segment type.
+
+    Parameters
+    ----------
+        track_db : pd.DataFrame
+            Pandas DataFrame storing all the annotations.
+        path_output : str
+            Figure saving path.
+    """
+
+    track_db_segments = track_db.groupby('segment_class')
+    output = track_db_segments.agg({'index': 'count', 'segment_dur': [np.sum, np.mean, np.min, np.max]})
+    output.to_csv(os.path.join(PATH_OUTPUT, 'stats_per_segment_class.csv'))
+
+
 if __name__ == '__main__':
 
     # setting global variables
@@ -306,9 +322,7 @@ if __name__ == '__main__':
     jsd_track_db = load_jsd(path_annotation_files)
     nr_tracks = len(jsd_track_db['track_name'].unique())
 
-    print('Number of segments per class:')
-    print(jsd_track_db.groupby('segment_class').describe())
-
+    general_statistics(jsd_track_db, PATH_OUTPUT)
     plot_hist_segments_per_track(jsd_track_db, PATH_OUTPUT)
     plot_hist_choruses_per_track(jsd_track_db, PATH_OUTPUT)
     plot_hist_solos_per_track(jsd_track_db, PATH_OUTPUT)
