@@ -49,7 +49,10 @@ This script takes the files from `data/annotations_raw` and applies the followin
 
 * The SonicVisualiser files of the following files are missing, however, annotations are in `annotations_raw`:
   - CharlieParker_K.C.Blues_Orig
-  - PatMetheny_CabinFever_Orig
-  - PatMetheny_MidnightVoyage_Orig
-  - PatMetheny_NothingPersonal_Orig
   - SidneyBechet_I'mComingVirginia
+
+* The following tracks are contained in the WJD but are actually duplicates
+  - PatMetheny_CabinFever_Orig == MichaelBrecker_CabinFever_Orig
+  - PatMetheny_MidnightVoyage_Orig == MichaelBrecker_MidnightVoyage_Orig
+  - PatMetheny_NothingPersonal_Orig == MichaelBrecker_NothingPersonal_Orig
+  --> we only keep the original files (in this case Michael Brecker)
