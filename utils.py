@@ -3,6 +3,7 @@ import tqdm
 import numpy as np
 import pandas as pd
 import re
+import json
 
 
 def load_jsd(path_annotation_files):
@@ -49,9 +50,9 @@ def load_jsd(path_annotation_files):
     for cur_index, cur_row in annotations.iterrows():
         # set segment_class and ids
         if (
-                'silence' in cur_row['label'] or
-                'intro' in cur_row['label'] or
-                'outro' in cur_row['label']
+            'silence' in cur_row['label'] or
+            'intro' in cur_row['label'] or
+            'outro' in cur_row['label']
         ):
             annotations.at[cur_index, 'segment_class'] = cur_row['label']
 
@@ -137,3 +138,19 @@ def filter_db_by_solo(track_db):
     track_db_solos['segment_dur'] = track_db_solos['segment_end'] - track_db_solos['segment_start']
 
     return track_db_solos
+
+
+def get_instruments():
+    instruments = pd.read_csv('data/instruments.csv', sep=';')
+
+    return instruments
+
+
+def get_boundaries(track_data):
+    """Helper function to go from segments to boundaries.
+    Start and end positions are concatenated and only the unique values survive.
+    """
+    boundaries = np.unique(list(track_data['segment_start'].values) +
+                           list(track_data['segment_end'].values))
+
+    return np.sort(boundaries)

@@ -13,3 +13,5 @@ dependencies:
     - seaborn
     - scikit-learn
     - yaml
+    - pip:
+        - mir-eval==0.5
