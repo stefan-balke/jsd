@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import seaborn as sns
 import pandas as pd
-from utils import load_jsd, filter_db_by_solo
+import utils
 sns.set(style='white')
 sns.set_context('paper', font_scale=1.6, rc={'lines.linewidth': 0.75})
 sns.set_color_codes('muted')
@@ -40,7 +40,7 @@ def plot_hist_segments_per_track(track_db, path_output, count_threshold=20):
     data_count[data_count > count_threshold] = count_threshold + 5
 
     # plotting
-    fig, ax = plt.subplots(figsize=(9, 4))
+    _, ax = plt.subplots(figsize=(9, 4))
     sns.distplot(data_count, bins='auto', kde=False, norm_hist=False,
                  hist_kws={'align': 'right', 'alpha': 1.0})
     labels = ax.get_xticks().tolist()
@@ -82,7 +82,7 @@ def plot_hist_choruses_per_track(track_db, path_output, count_threshold=20):
     data_count[data_count > count_threshold] = count_threshold + 5
 
     # plotting
-    fig, ax = plt.subplots(figsize=(9, 4))
+    _, ax = plt.subplots(figsize=(9, 4))
     sns.distplot(data_count, bins='auto', kde=False, norm_hist=False,
                  hist_kws={'align': 'right', 'alpha': 1.0})
     labels = ax.get_xticks().tolist()
@@ -118,7 +118,7 @@ def plot_hist_solos_per_track(track_db, path_output):
     n_bars = len(data)
 
     # plotting
-    fig, ax = plt.subplots(figsize=(9, 4))
+    _, ax = plt.subplots(figsize=(9, 4))
     ind = np.arange(n_bars)
     plt.bar(ind, data.values)
     plt.xticks(ind, data.index.astype(int).values.tolist())
@@ -150,6 +150,8 @@ def plot_hist_solo_choruses_per_instrument(track_db, path_output, count_threshol
 
     data = pd.DataFrame({'count': track_db_filtered.groupby(['instrument_solo']).size()}).reset_index()
     data_count = data['count'].values
+
+    # count instruments with less than count_threshold solos to other
     data_count[data_count < count_threshold] = -1
     n_others = np.sum(data_count == -1)
     n_bars = np.sum(data['count'] > 0)
@@ -158,7 +160,7 @@ def plot_hist_solo_choruses_per_instrument(track_db, path_output, count_threshol
     n_bars = len(data)
 
     # plotting
-    fig, ax = plt.subplots(figsize=(9, 4))
+    _, ax = plt.subplots(figsize=(9, 4))
     ind = np.arange(n_bars)
     plt.bar(ind, data['count'])
     labels = data['instrument_solo'][:n_bars].to_list()
@@ -192,6 +194,8 @@ def plot_hist_solos_per_instrument(track_db, path_output, count_threshold=5):
 
     data = pd.DataFrame({'count': track_db_filtered.groupby(['instrument_solo']).size()}).reset_index()
     data_count = data['count'].values
+
+    # count instruments with less than count_threshold solos to other
     data_count[data_count < count_threshold] = -1
     n_others = np.sum(data_count == -1)
     n_bars = np.sum(data['count'] > 0)
@@ -200,7 +204,7 @@ def plot_hist_solos_per_instrument(track_db, path_output, count_threshold=5):
     n_bars = len(data)
 
     # plotting
-    fig, ax = plt.subplots(figsize=(9, 4))
+    _, ax = plt.subplots(figsize=(9, 4))
     ind = np.arange(n_bars)
     plt.bar(ind, data['count'])
     labels = data['instrument_solo'][:n_bars].to_list()
@@ -239,7 +243,7 @@ def plot_hist_solodurtotal_per_instrument(track_db, path_output, dur_threshold=6
     n_bars = len(data)
 
     # plotting
-    fig, ax = plt.subplots(figsize=(9, 4))
+    _, ax = plt.subplots(figsize=(9, 4))
     ind = np.arange(n_bars)
     plt.bar(ind, data['segment_dur'] / 60)
     labels = data['instrument_solo'][:n_bars].to_list()
@@ -263,7 +267,7 @@ def plot_boxplot_solodur_per_instrument(track_db, path_output):
     """
 
     track_db_filtered = track_db.copy(deep=True)
-    track_db_filtered = filter_db_by_solo(track_db_filtered)
+    track_db_filtered = utils.filter_db_by_solo(track_db_filtered)
     data = track_db_filtered
 
     # exclude 'MilesDavis_BitchesBrew_Orig' track
@@ -283,7 +287,7 @@ def plot_boxplot_solodur_per_instrument(track_db, path_output):
     box_order = medians.index.to_list()
 
     # plotting
-    fig, ax = plt.subplots(figsize=(9, 4))
+    _, ax = plt.subplots(figsize=(9, 4))
     sns.boxplot(x='instrument_solo', y='segment_dur', data=data, color='b', order=box_order)
     plt.xticks(rotation=60)
     ax.set_xlabel('Solo Instrument')
@@ -293,7 +297,7 @@ def plot_boxplot_solodur_per_instrument(track_db, path_output):
     plt.savefig(os.path.join(path_output, 'boxplot_solodur_per_instrument.pdf'), bbox_inches='tight')
 
 
-def general_statistics(jsd_track_db, path_output):
+def stats_per_segment_class(track_db, path_output):
     """Statistics per Segment type.
 
     Parameters
@@ -309,6 +313,64 @@ def general_statistics(jsd_track_db, path_output):
     output.to_csv(os.path.join(PATH_OUTPUT, 'stats_per_segment_class.csv'))
 
 
+def stats_per_instrument(track_db, path_output):
+    def process(track_db, solo_level=False):
+        track_db_filtered = track_db.copy(deep=True)
+        # only consider solos
+        track_db_filtered = track_db_filtered[track_db_filtered['segment_class'] == 'solo']
+
+        if solo_level:
+            # count every solo only once (neglect multiple chorusses)
+            track_db_filtered = utils.filter_db_by_solo(track_db_filtered)
+
+        track_db_filtered_unrolled = []
+
+        # unroll mixed solos
+        for _, cur_row in track_db_filtered.iterrows():
+            instruments = cur_row['instrument_solo'].split(',')
+
+            for cur_instrument in instruments:
+                cur_row_instr = cur_row.copy()
+                cur_row_instr['instrument_solo'] = cur_instrument
+
+                track_db_filtered_unrolled.append(cur_row_instr.to_dict())
+
+        track_db_filtered_unrolled = pd.DataFrame(track_db_filtered_unrolled)
+
+        return track_db_filtered_unrolled['instrument_solo'].value_counts()
+
+    counts_chorus = process(track_db, solo_level=False)
+    counts_solo = process(track_db, solo_level=True)
+
+    output = utils.get_instruments()
+
+    output['jsd_n_chorusses'] = 0
+    for cur_abbr, cur_row in counts_chorus.to_frame().iterrows():
+        if (output['abbr'] == cur_abbr).sum() == 0:
+            print('Warning: Instrument "{}" is not specified!'.format(cur_abbr))
+
+        output.loc[output[output['abbr'] == cur_abbr].index,
+                'jsd_n_chorusses'] = cur_row['instrument_solo']
+
+    output['jsd_n_solos'] = 0
+    for cur_abbr, cur_row in counts_solo.to_frame().iterrows():
+        output.loc[output[output['abbr'] == cur_abbr].index,
+                'jsd_n_solos'] = cur_row['instrument_solo']
+
+    output['trans_perc'] = output['wjd_n_solos'] / output['jsd_n_solos'] * 100
+    # add sum line
+    output = output.append(output.sum(numeric_only=True), ignore_index=True)
+    # except for trans_perc take the mean
+    output.loc[output.tail(1).index.item(),
+            'trans_perc'] = output.iloc[:-1]['trans_perc'].mean()
+
+    with open('figures_statistics/overview_table.tex', 'w') as fh:
+        fh.write(output.to_latex(index=True,
+                                columns=['abbr', 'name', 'jsd_n_solos',
+                                        'jsd_n_chorusses', 'wjd_n_solos', 'trans_perc'],
+                                float_format="{:0.2f}".format))
+
+
 if __name__ == '__main__':
 
     # setting global variables
@@ -319,10 +381,12 @@ if __name__ == '__main__':
 
     os.makedirs(PATH_OUTPUT, exist_ok=True)
 
-    jsd_track_db = load_jsd(path_annotation_files)
+    jsd_track_db = utils.load_jsd(path_annotation_files)
     nr_tracks = len(jsd_track_db['track_name'].unique())
 
-    general_statistics(jsd_track_db, PATH_OUTPUT)
+    stats_per_segment_class(jsd_track_db, PATH_OUTPUT)
+    stats_per_instrument(jsd_track_db, PATH_OUTPUT)
+    """
     plot_hist_segments_per_track(jsd_track_db, PATH_OUTPUT)
     plot_hist_choruses_per_track(jsd_track_db, PATH_OUTPUT)
     plot_hist_solos_per_track(jsd_track_db, PATH_OUTPUT)
@@ -330,3 +394,4 @@ if __name__ == '__main__':
     plot_hist_solos_per_instrument(jsd_track_db, PATH_OUTPUT)
     plot_hist_solodurtotal_per_instrument(jsd_track_db, PATH_OUTPUT)
     plot_boxplot_solodur_per_instrument(jsd_track_db, PATH_OUTPUT)
+    """
