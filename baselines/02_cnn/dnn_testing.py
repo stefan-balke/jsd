@@ -93,7 +93,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config = utils.load_config(os.path.join(args.path_results, 'config.yml'))
-    path_test = os.path.join(args.path_data, 'salami_test.txt')
     cur_split_name = os.path.splitext(os.path.basename(args.path_split))[0]
 
     # load split files
@@ -108,7 +107,7 @@ if __name__ == '__main__':
     for cur_bag_idx in range(args.bagging):
         # load pre-computed thresholds for peak picking
         try:
-            fn_split = 'peak_picking_thresholds-{}-{}.yml'.format(cur_split_name, cur_bag_idx)
+            fn_split = 'peak_picking_thresholds-{}.yml'.format(cur_bag_idx)
             with open(os.path.join(args.path_results, fn_split), 'rb') as fp:
                 thresholds = yaml.load(fp, Loader=yaml.FullLoader)
         except FileNotFoundError:
@@ -117,7 +116,7 @@ if __name__ == '__main__':
 
         path_model = os.path.join(args.path_results, 'architecture-{}.json'.format(cur_bag_idx))
         path_weights = os.path.join(args.path_results, 'weights-{}.h5'.format(cur_bag_idx))
-        path_pred = os.path.join(args.path_results, 'pred-test-{}-{}.npz'.format(cur_bag_idx, cur_split_name))
+        path_pred = os.path.join(args.path_results, 'pred-test-{}.npz'.format(cur_bag_idx))
         data = dict()
 
         if args.eval_only:

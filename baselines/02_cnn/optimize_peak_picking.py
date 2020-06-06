@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
         path_model = os.path.join(args.path_results, 'architecture-{}.json'.format(cur_bag_idx))
         path_weights = os.path.join(args.path_results, 'weights-{}.h5'.format(cur_bag_idx))
-        path_pred = os.path.join(args.path_results, 'pred-valid-{}-{}.npz'.format(cur_split_name, cur_bag_idx))
+        path_pred = os.path.join(args.path_results, 'pred-valid-{}.npz'.format(cur_bag_idx))
         fps = config['fs'] / (config['hop_size'] * config['subsampling'])
         data = dict()
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
         # save thresholds
         data = {'thresh_05': float(thresh_05), 'thresh_3': float(thresh_3)}
-        file_name = os.path.join(args.path_results, 'peak_picking_thresholds-{}-{}.yml'.format(cur_split_name, cur_bag_idx))
+        file_name = os.path.join(args.path_results, 'peak_picking_thresholds-{}.yml'.format(cur_bag_idx))
 
         with open(file_name, 'w') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
