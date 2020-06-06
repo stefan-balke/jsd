@@ -102,18 +102,19 @@ if __name__ == '__main__':
 
     predict_files = predict_files['test']
 
+    # load pre-computed thresholds for peak picking
+    try:
+        fn_split = 'peak_picking_thresholds.yml'
+        with open(os.path.join(args.path_results, fn_split), 'rb') as fp:
+            thresholds = yaml.load(fp, Loader=yaml.FullLoader)
+    except FileNotFoundError:
+        print('No peak_picking_thresholds.yml found. Please run "optimize_peak_picking.py" first.')
+        sys.exit()
+
+
     bags = []
 
     for cur_bag_idx in range(args.bagging):
-        # load pre-computed thresholds for peak picking
-        try:
-            fn_split = 'peak_picking_thresholds-{}.yml'.format(cur_bag_idx)
-            with open(os.path.join(args.path_results, fn_split), 'rb') as fp:
-                thresholds = yaml.load(fp, Loader=yaml.FullLoader)
-        except FileNotFoundError:
-            print('No peak_picking_thresholds.yml found. Please run "optimize_peak_picking.py" first.')
-            sys.exit()
-
         path_model = os.path.join(args.path_results, 'architecture-{}.json'.format(cur_bag_idx))
         path_weights = os.path.join(args.path_results, 'weights-{}.h5'.format(cur_bag_idx))
         path_pred = os.path.join(args.path_results, 'pred-test-{}.npz'.format(cur_bag_idx))

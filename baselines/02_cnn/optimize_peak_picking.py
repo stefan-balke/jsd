@@ -58,54 +58,54 @@ if __name__ == '__main__':
 
         bags.append(data)
 
-        try:
-            assert np.all(bags[0]['songs'] == bags[cur_bag_idx]['songs'])
-        except AssertionError:
-            print('Song order is not identical. Evaluation is corrupt!')
+    try:
+        assert np.all(bags[0]['songs'] == bags[cur_bag_idx]['songs'])
+    except AssertionError:
+        print('Song order is not identical. Evaluation is corrupt!')
 
-        # model bagging
-        predictions = []
-        songs = bags[0]['songs']
-        gts = bags[0]['gts']
+    # model bagging
+    predictions = []
+    songs = bags[0]['songs']
+    gts = bags[0]['gts']
 
-        # collect data for model bagging
-        if args.bagging > 1:
-            for cur_song_idx in range(len(songs)):
-                cur_predictions = []
+    # collect data for model bagging
+    if args.bagging > 1:
+        for cur_song_idx in range(len(songs)):
+            cur_predictions = []
 
-                for cur_bag in bags:
-                    cur_predictions.append(cur_bag['predictions'][cur_song_idx])
+            for cur_bag in bags:
+                cur_predictions.append(cur_bag['predictions'][cur_song_idx])
 
-                # average predictions
-                cur_prediction = np.mean(np.asarray(cur_predictions), axis=0)
-                predictions.append(cur_prediction)
-        else:
-            predictions = bags[0]['predictions']
+            # average predictions
+            cur_prediction = np.mean(np.asarray(cur_predictions), axis=0)
+            predictions.append(cur_prediction)
+    else:
+        predictions = bags[0]['predictions']
 
-        # Calculate optimal threshold parameter on validation set
-        # perform threshold sweep
-        thresholds = np.arange(0.05, 0.95, 0.05)
-        F_05_max = 0
-        F_3_max = 0
+    # Calculate optimal threshold parameter on validation set
+    # perform threshold sweep
+    thresholds = np.arange(0.05, 0.95, 0.05)
+    F_05_max = 0
+    F_3_max = 0
 
-        for cur_threshold in tqdm.tqdm(thresholds):
-            # Evaluate with 0.5 s tolerance
-            F_05, _, _ = evaluate(songs, predictions, gts, window=0.5, fps=fps, threshold=cur_threshold)
+    for cur_threshold in tqdm.tqdm(thresholds):
+        # Evaluate with 0.5 s tolerance
+        F_05, _, _ = evaluate(songs, predictions, gts, window=0.5, fps=fps, threshold=cur_threshold)
 
-            # Evaluate with 3.0 s tolerance
-            F_3, _, _ = evaluate(songs, predictions, gts, window=3.0, fps=fps, threshold=cur_threshold)
+        # Evaluate with 3.0 s tolerance
+        F_3, _, _ = evaluate(songs, predictions, gts, window=3.0, fps=fps, threshold=cur_threshold)
 
-            if F_05_max < F_05:
-                thresh_05 = cur_threshold
-                F_05_max = F_05
+        if F_05_max < F_05:
+            thresh_05 = cur_threshold
+            F_05_max = F_05
 
-            if F_3_max < F_3:
-                thresh_3 = cur_threshold
-                F_3_max = F_3
+        if F_3_max < F_3:
+            thresh_3 = cur_threshold
+            F_3_max = F_3
 
-        # save thresholds
-        data = {'thresh_05': float(thresh_05), 'thresh_3': float(thresh_3)}
-        file_name = os.path.join(args.path_results, 'peak_picking_thresholds-{}.yml'.format(cur_bag_idx))
+    # save thresholds
+    data = {'thresh_05': float(thresh_05), 'thresh_3': float(thresh_3)}
+    file_name = os.path.join(args.path_results, 'peak_picking_thresholds.yml')
 
-        with open(file_name, 'w') as outfile:
-            yaml.dump(data, outfile, default_flow_style=False)
+    with open(file_name, 'w') as outfile:
+        yaml.dump(data, outfile, default_flow_style=False)
