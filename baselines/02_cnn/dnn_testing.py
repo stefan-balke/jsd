@@ -121,7 +121,7 @@ if __name__ == '__main__':
         data = dict()
 
         if args.eval_only:
-            saved_data = np.load(path_pred)
+            saved_data = np.load(path_pred, allow_pickle=True)
             data['predictions'] = saved_data['predictions']
             data['gts'] = saved_data['gts']
             data['songs'] = saved_data['songs']
