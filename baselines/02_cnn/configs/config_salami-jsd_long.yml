@@ -1,8 +1,8 @@
 fs: 44100
 win_size: 2048
 hop_size: 1024
-subsampling: 6
-target_smear: 1.5
+subsampling: 12
+target_smear: 6
 class_balance: 0.2
 input_shape: [116, 80, 1]
 input_data: ['jsd_features', 'salami_features', ]
