@@ -4,7 +4,7 @@
 import os
 import glob
 import pandas as pd
-from utils import create_track_db
+from utils import load_jsd
 
 
 if __name__ == '__main__':
@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     os.makedirs(os.path.join(path_data, path_output), exist_ok=True)
 
-    track_db = create_track_db(annotation_files)
+    track_db = load_jsd(annotation_files)
     nr_tracks = len(track_db['trackname'].unique())
 
     for cur_idx, cur_group in track_db.groupby('trackname'):

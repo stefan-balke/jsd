@@ -86,6 +86,7 @@ if __name__ == '__main__':
     parser.add_argument('--path_inputs', type=str, default='salami_features')
     parser.add_argument('--path_targets', type=str, default='salami_targets')
     parser.add_argument('--path_results', type=str)
+    parser.add_argument('--path_split', type=str, default='data/salami_split.yml', help='Path to split yml.')
     parser.add_argument('--eval_only', action='store_true', default=False)
     parser.add_argument('--bagging', type=int, default=1, help='Number of networks to train.')
 
@@ -93,18 +94,19 @@ if __name__ == '__main__':
 
     config = utils.load_config(os.path.join(args.path_results, 'config.yml'))
     path_test = os.path.join(args.path_data, 'salami_test.txt')
-
-    # load pre-computed thresholds for peak picking
-    try:
-        with open(os.path.join(args.path_results, 'peak_picking_thresholds.yml'), 'rb') as fp:
-            thresholds = yaml.load(fp, Loader=yaml.FullLoader)
-    except FileNotFoundError:
-        print('No peak_picking_thresholds.yml found. Please run "optimize_peak_picking.py" first.')
-        sys.exit()
+    cur_split_name = os.path.splitext(os.path.basename(args.path_split))[0]
 
     bags = []
 
     for cur_bag_idx in range(args.bagging):
+        # load pre-computed thresholds for peak picking
+        try:
+            fn_split = 'peak_picking_thresholds-{}-{}.yml'.format(cur_split_name, cur_bag_idx)
+            with open(os.path.join(args.path_results, fn_split), 'rb') as fp:
+                thresholds = yaml.load(fp, Loader=yaml.FullLoader)
+        except FileNotFoundError:
+            print('No peak_picking_thresholds.yml found. Please run "optimize_peak_picking.py" first.')
+            sys.exit()
 
         path_model = os.path.join(args.path_results, 'architecture-{}.json'.format(cur_bag_idx))
         path_weights = os.path.join(args.path_results, 'weights-{}.h5'.format(cur_bag_idx))
