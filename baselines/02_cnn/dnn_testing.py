@@ -96,6 +96,13 @@ if __name__ == '__main__':
     path_test = os.path.join(args.path_data, 'salami_test.txt')
     cur_split_name = os.path.splitext(os.path.basename(args.path_split))[0]
 
+    # load split files
+    predict_files = None
+    with open(args.path_split) as fh:
+        predict_files = yaml.load(fh, Loader=yaml.FullLoader)
+
+    predict_files = predict_files['test']
+
     bags = []
 
     for cur_bag_idx in range(args.bagging):
@@ -110,7 +117,7 @@ if __name__ == '__main__':
 
         path_model = os.path.join(args.path_results, 'architecture-{}.json'.format(cur_bag_idx))
         path_weights = os.path.join(args.path_results, 'weights-{}.h5'.format(cur_bag_idx))
-        path_pred = os.path.join(args.path_results, 'pred-test-{}.npz'.format(cur_bag_idx))
+        path_pred = os.path.join(args.path_results, 'pred-test-{}-{}.npz'.format(cur_bag_idx, cur_split_name))
         data = dict()
 
         if args.eval_only:
@@ -120,7 +127,7 @@ if __name__ == '__main__':
             data['songs'] = saved_data['songs']
         else:
             predictions, gts, songs = predict(args.path_data, args.path_inputs, args.path_targets,
-                                              path_test, path_model, path_weights, config=config)
+                                              predict_files, path_model, path_weights, config=config)
             np.savez_compressed(path_pred, predictions=predictions, gts=gts, songs=songs)
             data['predictions'] = predictions
             data['gts'] = gts
