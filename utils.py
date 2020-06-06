@@ -38,7 +38,7 @@ def load_jsd(path_annotation_files):
 
         annotations = annotations.append(cur_csv)
 
-    annotations = annotations.reset_index()
+    annotations = annotations.reset_index(drop=True)
     annotations['segment_class'] = ''
     annotations['segment_class_id'] = np.nan
     annotations['segment_chorus_id'] = np.nan
@@ -150,7 +150,23 @@ def get_boundaries(track_data):
     """Helper function to go from segments to boundaries.
     Start and end positions are concatenated and only the unique values survive.
     """
-    boundaries = np.unique(list(track_data['segment_start'].values) +
-                           list(track_data['segment_end'].values))
+    cur_track_data = track_data.copy()
+
+    # filter boundaries to musical boundaries
+    drop_idcs = cur_track_data[cur_track_data['label'] == 'silence'].index.tolist()
+
+    for cur_idx in range(1, len(cur_track_data) - 1):
+        prev_segment = cur_track_data.iloc[cur_idx - 1]['label']
+        curr_segment = cur_track_data.reset_index().iloc[cur_idx]
+        next_segment = cur_track_data.iloc[cur_idx + 1]['label']
+
+        # check if surrounding segments contain music
+        if (prev_segment == 'silence') or (next_segment == 'silence'):
+            drop_idcs.append(curr_segment['index'])
+
+    cur_track_data = cur_track_data.drop(drop_idcs, axis=0)
+
+    boundaries = np.unique(list(cur_track_data['segment_start'].values) +
+                           list(cur_track_data['segment_end'].values))
 
     return np.sort(boundaries)
