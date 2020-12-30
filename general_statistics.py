@@ -309,8 +309,8 @@ def stats_per_segment_class(track_db, path_output):
     """
 
     track_db_segments = track_db.groupby('segment_class')
-    output = track_db_segments.agg({'index': 'count', 'segment_dur': [np.sum, np.mean, np.min, np.max]})
-    output.to_csv(os.path.join(PATH_OUTPUT, 'stats_per_segment_class.csv'))
+    output = track_db_segments.agg({'segment_dur': [np.sum, np.mean, np.min, np.max]})
+    output.to_csv(os.path.join(path_output, 'stats_per_segment_class.csv'))
 
 
 def stats_per_instrument(track_db, path_output):
@@ -386,7 +386,6 @@ if __name__ == '__main__':
 
     stats_per_segment_class(jsd_track_db, PATH_OUTPUT)
     stats_per_instrument(jsd_track_db, PATH_OUTPUT)
-    """
     plot_hist_segments_per_track(jsd_track_db, PATH_OUTPUT)
     plot_hist_choruses_per_track(jsd_track_db, PATH_OUTPUT)
     plot_hist_solos_per_track(jsd_track_db, PATH_OUTPUT)
@@ -394,4 +393,3 @@ if __name__ == '__main__':
     plot_hist_solos_per_instrument(jsd_track_db, PATH_OUTPUT)
     plot_hist_solodurtotal_per_instrument(jsd_track_db, PATH_OUTPUT)
     plot_boxplot_solodur_per_instrument(jsd_track_db, PATH_OUTPUT)
-    """
