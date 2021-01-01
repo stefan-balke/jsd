@@ -4,7 +4,7 @@
 import os
 import glob
 import pandas as pd
-from utils import load_jsd
+from jsd_utils import load_jsd
 
 
 if __name__ == '__main__':

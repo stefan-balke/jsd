@@ -7,7 +7,7 @@ import mir_eval
 
 # hacky relative import
 sys.path.append(os.path.join('..', '..'))
-import utils
+import jsd_utils
 
 
 def get_baseline_boundaries(track_dur, n_boundaries):
@@ -37,7 +37,7 @@ def main():
     PATH_DATA = os.path.join('..', '..', 'data')
     path_annotations = os.path.join(PATH_DATA, 'annotations_csv')
     path_annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
-    jsd_track_db = utils.load_jsd(path_annotation_files)
+    jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
     jsd_track_dur = pd.read_csv(os.path.join(PATH_DATA, 'track_durations.csv'))
 
     # for evaluation
@@ -55,7 +55,7 @@ def main():
 
         for _, cur_track in jsd_track_dur.iterrows():
             cur_jsd_track = jsd_track_db[jsd_track_db['track_name'] == cur_track['track_name']]
-            cur_boundaries_ref = utils.get_boundaries(cur_jsd_track)
+            cur_boundaries_ref = jsd_utils.get_boundaries(cur_jsd_track)
             cur_boundaries_est = get_baseline_boundaries(cur_track['duration'], cur_boundaries_ref.shape[0])
             F, P, R = mir_eval.onset.f_measure(cur_boundaries_ref,
                                                cur_boundaries_est,

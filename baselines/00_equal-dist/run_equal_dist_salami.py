@@ -89,7 +89,6 @@ def main():
             Fs.append(F)
             Rs.append(R)
             Ps.append(P)
-            
 
         if cur_window == 0.5:
             F_05 = np.mean(Fs)
