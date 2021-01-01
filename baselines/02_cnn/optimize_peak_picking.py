@@ -14,25 +14,36 @@ from dnn_testing import predict, evaluate
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DNN Testing')
     parser.add_argument('--path_data', type=str, default='data')
-    parser.add_argument('--path_inputs', type=str, default='salami_features')
-    parser.add_argument('--path_targets', type=str, default='salami_targets')
     parser.add_argument('--path_results', type=str)
-    parser.add_argument('--path_split', type=str, default='data/salami_split.yml', help='Path to split yml.')
     parser.add_argument('--eval_only', action='store_true', default=False)
-    parser.add_argument('--bagging', type=int, default=1, help='Number of networks to train.')
+    parser.add_argument('--bagging', type=int, default=1, help='Number of bagged networks.')
 
     args = parser.parse_args()
 
     config = utils.load_config(os.path.join(args.path_results, 'config.yml'))
     fps = config['fs'] / (config['hop_size'] * config['subsampling'])
     bags = []
-    cur_split_name = os.path.splitext(os.path.basename(args.path_split))[0]
 
-    predict_files = None
-    with open(args.path_split) as fh:
-        predict_files = yaml.load(fh, Loader=yaml.FullLoader)
+    # collect pathes
+    PATH_X = [os.path.join(args.path_data, cur_path) for cur_path in config['input_data']]
+    PATH_y = [os.path.join(args.path_data, cur_path) for cur_path in config['target_data']]
 
-    predict_files = predict_files['val']
+    # collect split data
+    splits = []
+    for cur_path in config['split_data']:
+        with open(cur_path) as fh:
+            splits.append(yaml.load(fh, Loader=yaml.FullLoader))
+
+    # prepare path to data for validation set
+    pathes_val_X = []
+    for cur_ds_id, cur_path_X in enumerate(PATH_X):
+        for cur_fn in splits[cur_ds_id]['val']:
+            pathes_val_X.append(os.path.join(cur_path_X, '{}.npz'.format(cur_fn)))
+
+    pathes_val_y = []
+    for cur_ds_id, cur_path_y in enumerate(PATH_y):
+        for cur_fn in splits[cur_ds_id]['val']:
+            pathes_val_y.append(os.path.join(cur_path_y, '{}.npz'.format(cur_fn)))
 
     for cur_bag_idx in range(args.bagging):
         print('Model {}:'.format(cur_bag_idx))
@@ -49,8 +60,8 @@ if __name__ == '__main__':
             data['gts'] = saved_data['gts']
             data['songs'] = saved_data['songs']
         else:
-            predictions, gts, songs = predict(args.path_data, args.path_inputs, args.path_targets,
-                                              predict_files, path_model, path_weights, config=config)
+            predictions, gts, songs = predict(pathes_val_X, pathes_val_y,
+                                              path_model, path_weights, config=config)
             np.savez_compressed(path_pred, predictions=predictions, gts=gts, songs=songs)
             data['predictions'] = predictions
             data['gts'] = gts

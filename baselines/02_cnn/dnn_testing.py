@@ -15,8 +15,7 @@ import pescador
 import yaml
 
 
-def predict(path_data, path_inputs, path_targets, predict_files,
-            path_model, path_weights, config):
+def predict(pathes_X, pathes_y, path_model, path_weights, config):
 
     # Model reconstruction from JSON file
     with open(path_model, 'r') as f:
@@ -29,12 +28,9 @@ def predict(path_data, path_inputs, path_targets, predict_files,
     gts = []
     songs = []
 
-    for cur_path_song in tqdm.tqdm(predict_files):
+    for cur_song_idx, cur_path_X in enumerate(tqdm.tqdm(pathes_X)):
         # streamer with just a single song
-        cur_path_features = os.path.join(path_data, path_inputs, '{}.npz'.format(cur_path_song))
-        cur_path_targets = os.path.join(path_data, path_targets, '{}.npz'.format(cur_path_song))
-
-        stream = ds.stream_generator(cur_path_features, 'f_mel', cur_path_targets, 'target', patch_width=config['input_shape'][0],
+        stream = ds.stream_generator(cur_path_X, 'f_mel', pathes_y[cur_song_idx], 'target', patch_width=config['input_shape'][0],
                                      flatten_X=False, shuffle=False, add_dimension=True, target_smear=False,
                                      class_balance=False, subsampling=config['subsampling'])
         mini_batch_generator = pescador.buffer_stream(stream, 8)
@@ -42,7 +38,7 @@ def predict(path_data, path_inputs, path_targets, predict_files,
         # predict for each patch
         cur_predictions = []
         cur_gts = []
-        cur_song = cur_path_song
+        cur_song = os.path.splitext(os.path.basename(cur_path_X))[0]
 
         for cur_batch in mini_batch_generator:
             cur_predictions.extend(model.predict_on_batch(cur_batch['X']).squeeze())
@@ -83,24 +79,34 @@ def evaluate(songs, predictions, gts, window, fps, threshold):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DNN Testing')
     parser.add_argument('--path_data', type=str, default='data')
-    parser.add_argument('--path_inputs', type=str, default='salami_features')
-    parser.add_argument('--path_targets', type=str, default='salami_targets')
     parser.add_argument('--path_results', type=str)
-    parser.add_argument('--path_split', type=str, default='data/salami_split.yml', help='Path to split yml.')
     parser.add_argument('--eval_only', action='store_true', default=False)
-    parser.add_argument('--bagging', type=int, default=1, help='Number of networks to train.')
+    parser.add_argument('--bagging', type=int, default=1, help='Number of bagged networks.')
 
     args = parser.parse_args()
 
     config = utils.load_config(os.path.join(args.path_results, 'config.yml'))
-    cur_split_name = os.path.splitext(os.path.basename(args.path_split))[0]
 
-    # load split files
-    predict_files = None
-    with open(args.path_split) as fh:
-        predict_files = yaml.load(fh, Loader=yaml.FullLoader)
+    # collect pathes
+    PATH_X = [os.path.join(args.path_data, cur_path) for cur_path in config['input_data']]
+    PATH_y = [os.path.join(args.path_data, cur_path) for cur_path in config['target_data']]
 
-    predict_files = predict_files['test']
+    # collect split data
+    splits = []
+    for cur_path in config['split_data']:
+        with open(cur_path) as fh:
+            splits.append(yaml.load(fh, Loader=yaml.FullLoader))
+
+    # prepare path to data for validation set
+    pathes_test_X = []
+    for cur_ds_id, cur_path_X in enumerate(PATH_X):
+        for cur_fn in splits[cur_ds_id]['test']:
+            pathes_test_X.append(os.path.join(cur_path_X, '{}.npz'.format(cur_fn)))
+
+    pathes_test_y = []
+    for cur_ds_id, cur_path_y in enumerate(PATH_y):
+        for cur_fn in splits[cur_ds_id]['test']:
+            pathes_test_y.append(os.path.join(cur_path_y, '{}.npz'.format(cur_fn)))
 
     # load pre-computed thresholds for peak picking
     try:
@@ -110,7 +116,6 @@ if __name__ == '__main__':
     except FileNotFoundError:
         print('No peak_picking_thresholds.yml found. Please run "optimize_peak_picking.py" first.')
         sys.exit()
-
 
     bags = []
 
@@ -126,8 +131,8 @@ if __name__ == '__main__':
             data['gts'] = saved_data['gts']
             data['songs'] = saved_data['songs']
         else:
-            predictions, gts, songs = predict(args.path_data, args.path_inputs, args.path_targets,
-                                              predict_files, path_model, path_weights, config=config)
+            predictions, gts, songs = predict(pathes_test_X, pathes_test_y,
+                                              path_model, path_weights, config=config)
             np.savez_compressed(path_pred, predictions=predictions, gts=gts, songs=songs)
             data['predictions'] = predictions
             data['gts'] = gts
