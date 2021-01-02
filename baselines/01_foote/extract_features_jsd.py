@@ -1,5 +1,5 @@
 """
-    This script extracts pitch (log-freq.) and mfcc features from audio files.
+    This script extracts mfcc features from audio files in parallel.
 """
 
 import argparse
@@ -18,14 +18,12 @@ def extract_features(params):
 
     cur_audio, _ = librosa.load(fn_audio, sr=sr)
 
-    f_pitch = librosa.core.iirt(cur_audio, win_length=2*hop_size, hop_length=hop_size)
-
     f_mfcc = librosa.feature.mfcc(cur_audio, sr, S=None, n_mfcc=20,
                                   n_fft=2*hop_size, hop_length=hop_size)
 
     fn_cur_features = os.path.splitext(os.path.split(fn_audio)[1])
 
-    cur_features = {'f_pitch': f_pitch, 'params': params,
+    cur_features = {'params': params,
                     'f_mfcc': f_mfcc}
 
     np.savez_compressed(os.path.join(path_features, fn_cur_features[0] + '.npz'), **cur_features)
@@ -37,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--dest', help='path to the output destination')
     args = parser.parse_args()
 
-    path_audio = args.script
+    path_audio = args.src
     path_features = args.dest
 
     # check if output folder exists
@@ -56,10 +54,6 @@ if __name__ == '__main__':
     if mode == 'DEVELOP':
         # Process single file and display results
         extract_features(params[0])
-        extract_features(params[1])
-        extract_features(params[2])
-        extract_features(params[3])
-        extract_features(params[4])
 
     if mode == 'PRODUCTION':
         # Batch processing
