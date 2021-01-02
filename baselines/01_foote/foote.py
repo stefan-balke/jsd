@@ -75,12 +75,11 @@ def compute_novelty_SSM(S, kernel, exclude=False):
     L = int((M - 1) / 2)
 
     nov = np.zeros(N)
-    # np.pad does not work with numba/jit
     S_padded = np.pad(S, L, mode='constant')
 
     for n in range(N):
-        # Does not work with numba/jit
         nov[n] = np.sum(S_padded[n:n+M, n:n+M] * kernel)
+
     if exclude:
         right = np.min([L, N])
         left = np.max([0, N-L])
@@ -154,9 +153,9 @@ def peak_picking(x, direction=None, abs_thresh=None, rel_thresh=None, descent_th
     if direction is None:
         direction = -1
     if abs_thresh is None:
-        abs_thresh = np.tile(0.5*np.median(x), len(x))
+        abs_thresh = np.tile(0.5 * np.median(x), len(x))
     if rel_thresh is None:
-        rel_thresh = 0.5*np.tile(np.sqrt(np.var(x)), len(x))
+        rel_thresh = np.tile(0.5 * np.sqrt(np.var(x)), len(x))
     if descent_thresh is None:
         descent_thresh = 0.5*rel_thresh
     if tmin is None:
@@ -182,7 +181,7 @@ def peak_picking(x, direction=None, abs_thresh=None, rel_thresh=None, descent_th
     # run through x
     for cur_idx in my_range:
         # get local gradient
-        dy = x[cur_idx+direction] - x[cur_idx]
+        dy = x[cur_idx + direction] - x[cur_idx]
 
         if (dy >= 0):
             rise = rise + dy
@@ -208,8 +207,93 @@ def peak_picking(x, direction=None, abs_thresh=None, rel_thresh=None, descent_th
                         rise = riseold + descent  # skip intermediary peak
                     if (descent <= -rel_thresh[candidate]):
                         if x[candidate] >= abs_thresh[candidate]:
-                            P.append(candidate)    # verified candidate as True peak
+                            P.append(candidate)  # verified candidate as True peak
                     searching_peak = True
                 descent = 0
         dyold = dy
     return P
+
+
+def detect_peaks(activations, threshold=0.5, fps=100, include_scores=False, combine=0,
+                 pre_avg=12, post_avg=6, pre_max=6, post_max=6):
+    """Detects peaks.
+
+    Implements the peak-picking method described in:
+    Sebastian Böck, Florian Krebs and Markus Schedl:
+    Evaluating the Online Capabilities of Onset Detection Methods.
+    Proceedings of the International Society for Music Information Retrieval Conference (ISMIR), 2012.
+
+    Modified by Jan Schlüter, 2014-04-24
+
+    Parameters
+    ----------
+    activations : np.nadarray
+        vector of activations to process
+    threshold : float
+        threshold for peak-picking
+    fps : float
+        frame rate of onset activation function in Hz
+    include_scores : boolean
+        include activation for each returned peak
+    combine :
+        only report 1 onset for N seconds
+    pre_avg :
+        use N past seconds for moving average
+    post_avg :
+        use N future seconds for moving average
+    pre_max :
+        use N past seconds for moving maximum
+    post_max :
+        use N future seconds for moving maximum
+
+    Returns
+    -------
+    stamps : np.ndarray
+    """
+
+    import scipy.ndimage.filters as sf
+    activations = activations.ravel()
+
+    # detections are activations equal to the moving maximum
+    max_length = int((pre_max + post_max) * fps) + 1
+    if max_length > 1:
+        max_origin = int((pre_max - post_max) * fps / 2)
+        mov_max = sf.maximum_filter1d(
+            activations, max_length, mode='constant', origin=max_origin)
+        detections = activations * (activations == mov_max)
+    else:
+        detections = activations
+
+    # detections must be greater than or equal to the moving average + threshold
+    avg_length = int((pre_avg + post_avg) * fps) + 1
+    if avg_length > 1:
+        avg_origin = int((pre_avg - post_avg) * fps / 2)
+        mov_avg = sf.uniform_filter1d(
+            activations, avg_length, mode='constant', origin=avg_origin)
+        detections = detections * (detections >= mov_avg + threshold)
+    else:
+        # if there is no moving average, treat the threshold as a global one
+        detections = detections * (detections >= threshold)
+
+    # convert detected onsets to a list of timestamps
+    if combine:
+        stamps = []
+        last_onset = 0
+        for i in np.nonzero(detections)[0]:
+            # only report an onset if the last N frames none was reported
+            if i > last_onset + combine:
+                stamps.append(i)
+                # save last reported onset
+                last_onset = i
+        stamps = np.array(stamps)
+    else:
+        stamps = np.where(detections)[0]
+
+    # include corresponding activations per peak if needed
+    if include_scores:
+        scores = activations[stamps]
+        if avg_length > 1:
+            scores -= mov_avg[stamps]
+        return stamps / float(fps), scores
+    else:
+        return stamps / float(fps)

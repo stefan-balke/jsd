@@ -146,27 +146,64 @@ def get_instruments():
     return instruments
 
 
-def get_boundaries(track_data):
+def get_boundaries(track_data, musical_only=False):
     """Helper function to go from segments to boundaries.
     Start and end positions are concatenated and only the unique values survive.
+
+    Parameters
+    ----------
+    track_data : pd.DataFrame
+        DataFrame containing JSD's annotations.
+    musical_only : boolean
+        Filter boundaries to musical boundaries, i.e. containing no silence boundaries
+        and only boundaries which are surrounded by musical parts.
+
+    Returns
+    -------
+    boundaries : np.ndarray, shape=(N, 2)
+        Start and end positions from the boundary.
+    """
+    cur_track_data = track_data.copy()
+
+    if musical_only:
+        cur_track_data = filter_segments(cur_track_data)
+
+    boundaries = np.unique(list(cur_track_data['segment_start'].values) +
+                           list(cur_track_data['segment_end'].values))
+
+    return np.sort(boundaries)
+
+
+def filter_segments(track_data):
+    """Filter segments to musical boundaries, i.e. containing no silence boundaries
+        and only boundaries which are surrounded by musical parts.
+
+    Parameters
+    ----------
+    track_data : pd.DataFrame
+        DataFrame containing JSD's annotations.
+
+    Returns
+    -------
+    segments : pd.DataFrame, shape=(N, 2)
+        Start and end positions from the boundary.
     """
     cur_track_data = track_data.copy()
 
     # filter boundaries to musical boundaries
     drop_idcs = cur_track_data[cur_track_data['label'] == 'silence'].index.tolist()
+    drop_idcs.extend(cur_track_data[cur_track_data['label'] == 'end'].index.tolist())
 
+    # filter trivial boundaries like silence->intro or outro->silence
     for cur_idx in range(1, len(cur_track_data) - 1):
         prev_segment = cur_track_data.iloc[cur_idx - 1]['label']
         curr_segment = cur_track_data.reset_index().iloc[cur_idx]
         next_segment = cur_track_data.iloc[cur_idx + 1]['label']
 
         # check if surrounding segments contain music
-        if (prev_segment == 'silence') or (next_segment == 'silence'):
+        if (prev_segment == 'silence') or (next_segment == 'silence') or (next_segment == 'end'):
             drop_idcs.append(curr_segment['index'])
 
     cur_track_data = cur_track_data.drop(drop_idcs, axis=0)
 
-    boundaries = np.unique(list(cur_track_data['segment_start'].values) +
-                           list(cur_track_data['segment_end'].values))
-
-    return np.sort(boundaries)
+    return cur_track_data

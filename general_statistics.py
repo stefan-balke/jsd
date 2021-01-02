@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import seaborn as sns
 import pandas as pd
-import utils
+import jsd_utils
 sns.set(style='white')
 sns.set_context('paper', font_scale=1.6, rc={'lines.linewidth': 0.75})
 sns.set_color_codes('muted')
@@ -267,7 +267,7 @@ def plot_boxplot_solodur_per_instrument(track_db, path_output):
     """
 
     track_db_filtered = track_db.copy(deep=True)
-    track_db_filtered = utils.filter_db_by_solo(track_db_filtered)
+    track_db_filtered = jsd_utils.filter_db_by_solo(track_db_filtered)
     data = track_db_filtered
 
     # exclude 'MilesDavis_BitchesBrew_Orig' track
@@ -321,7 +321,7 @@ def stats_per_instrument(track_db, path_output):
 
         if solo_level:
             # count every solo only once (neglect multiple chorusses)
-            track_db_filtered = utils.filter_db_by_solo(track_db_filtered)
+            track_db_filtered = jsd_utils.filter_db_by_solo(track_db_filtered)
 
         track_db_filtered_unrolled = []
 
@@ -342,7 +342,7 @@ def stats_per_instrument(track_db, path_output):
     counts_chorus = process(track_db, solo_level=False)
     counts_solo = process(track_db, solo_level=True)
 
-    output = utils.get_instruments()
+    output = jsd_utils.get_instruments()
 
     output['jsd_n_chorusses'] = 0
     for cur_abbr, cur_row in counts_chorus.to_frame().iterrows():
@@ -381,7 +381,7 @@ if __name__ == '__main__':
 
     os.makedirs(PATH_OUTPUT, exist_ok=True)
 
-    jsd_track_db = utils.load_jsd(path_annotation_files)
+    jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
     nr_tracks = len(jsd_track_db['track_name'].unique())
 
     stats_per_segment_class(jsd_track_db, PATH_OUTPUT)
