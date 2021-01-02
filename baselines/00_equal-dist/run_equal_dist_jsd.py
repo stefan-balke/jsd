@@ -4,33 +4,11 @@ import os
 import sys
 import glob
 import mir_eval
+import eqdist_utils
 
 # hacky relative import
 sys.path.append(os.path.join('..', '..'))
 import jsd_utils
-
-
-def get_baseline_boundaries(track_dur, n_boundaries):
-    """Takes the number of annotations per track and the track duration.
-    The boundaries are then spread equally along the time axis.
-
-    Parameters
-    ----------
-    track_dur : float
-        Duration of the track in seconds.
-    
-    n_boundaries : int
-        Number of boundaries given the annotations.
-
-    Returns
-    -------
-    boundaries : np.ndarray
-        Positions of the boundaries in seconds.
-    """
-
-    boundaries = np.linspace(0, track_dur, num=int(n_boundaries))
-
-    return boundaries
 
 
 def main():
@@ -39,6 +17,12 @@ def main():
     path_annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
     jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
     jsd_track_dur = pd.read_csv(os.path.join(PATH_DATA, 'track_durations.csv'))
+    silence_start = jsd_track_db[(jsd_track_db['segment_start'] == 0) & (jsd_track_db['label'] == 'silence')]
+    silence_start_median = silence_start.groupby('label').median()['segment_dur'].values[0]
+    silence_end = jsd_track_db[(jsd_track_db['segment_start'] != 0) & (jsd_track_db['label'] == 'silence')]
+    silence_end_median = silence_end.groupby('label').median()['segment_dur'].values[0]
+
+    print('Start median: {}, End Median: {}'.format(silence_start_median, silence_end_median))
 
     # for evaluation
     F_05 = 0
@@ -55,8 +39,13 @@ def main():
 
         for _, cur_track in jsd_track_dur.iterrows():
             cur_jsd_track = jsd_track_db[jsd_track_db['track_name'] == cur_track['track_name']]
-            cur_boundaries_ref = jsd_utils.get_boundaries(cur_jsd_track)
-            cur_boundaries_est = get_baseline_boundaries(cur_track['duration'], cur_boundaries_ref.shape[0])
+            baseline_track = eqdist_utils.get_baseline_segments(cur_track['duration'],
+                                                                cur_jsd_track.shape[0],
+                                                                silence_start_median,
+                                                                silence_end_median)
+            cur_boundaries_ref = jsd_utils.get_boundaries(cur_jsd_track, musical_only=True)
+            cur_boundaries_est = jsd_utils.get_boundaries(baseline_track, musical_only=True)
+            
             F, P, R = mir_eval.onset.f_measure(cur_boundaries_ref,
                                                cur_boundaries_est,
                                                window=cur_window)

@@ -16,7 +16,7 @@ import numpy as np
 
 # hacky relative import
 sys.path.append(os.path.join('..', '..'))
-import utils
+import jsd_utils
 
 
 def analysis(features, params, kernel_size, threshold):
@@ -89,7 +89,7 @@ def main():
     PATH_DATA = os.path.join('..', '..', 'data')
     path_annotations = os.path.join(PATH_DATA, 'annotations_csv')
     path_annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
-    jsd_track_db = utils.load_jsd(path_annotation_files)
+    jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
 
     path_output = 'evaluation'
     path_data = 'data'
@@ -113,7 +113,7 @@ def main():
         # loop over all tracks
         for cur_track_name in tqdm.tqdm(jsd_track_db['track_name'].unique()):
             cur_jsd_track = jsd_track_db[jsd_track_db['track_name'] == cur_track_name]
-            cur_boundaries_ref = utils.get_boundaries(cur_jsd_track)
+            cur_boundaries_ref = jsd_utils.get_boundaries(cur_jsd_track, musical_only=True)
 
             # get path to audiofeature file
             cur_path_features = os.path.join(path_features, cur_track_name + '.npz')
@@ -124,7 +124,7 @@ def main():
             # loop over all parameter settings
             for cur_params in params:
                 for cur_threshold in thresholds:
-                    # analyse the audiofeatures
+                    # analyze the audio features
                     (_, _, boundaries_mfcc) = analysis(features,
                                                        cur_params,
                                                        cur_kernel_size,

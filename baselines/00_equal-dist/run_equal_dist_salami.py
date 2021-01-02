@@ -4,58 +4,52 @@ import os
 import sys
 import glob
 import mir_eval
+import eqdist_utils
+import tqdm
+
+# hacky relative import
+sys.path.append(os.path.join('..', '..'))
+import jsd_utils
 
 
-def filter_boundaries(track_data):
-    cur_track_data = track_data.copy()
+def load_salami(track_durs, path_annotations):
+    salami_data = []
+ 
+    for cur_track_path in tqdm.tqdm(glob.glob(os.path.join(path_annotations, '*.txt'))):
+        cur_track_name = os.path.splitext(os.path.basename(cur_track_path))[0]
 
-    # filter boundaries to musical boundaries
-    drop_idcs = cur_track_data[cur_track_data['label'] == 'silence'].index.tolist()
-    drop_idcs.extend(cur_track_data[cur_track_data['label'] == 'end'].index.tolist())
+        try:
+            cur_track_data = pd.read_csv(cur_track_path, sep='\t', header=None, names=['segment_start', 'label'])
+        except FileNotFoundError:
+            print(cur_track_path)
+            continue
+        
+        cur_track_data['label'] = cur_track_data['label'].str.lower()
+        cur_track_data['track_name'] = cur_track_name
+        cur_track_data['segment_end'] = cur_track_data['segment_start'].shift(-1)
+        cur_track_data['segment_dur'] = cur_track_data['segment_end'] - cur_track_data['segment_start']
+        cur_track_data = cur_track_data[:-1]
+        salami_data.append(cur_track_data)
 
-    for cur_idx in range(1, len(cur_track_data) - 1):
-        prev_segment = cur_track_data.iloc[cur_idx - 1]['label']
-        curr_segment = cur_track_data.reset_index().iloc[cur_idx]
-        next_segment = cur_track_data.iloc[cur_idx + 1]['label']
+    salami_data = pd.concat(salami_data)
 
-        # check if surrounding segments contain music
-        if (prev_segment == 'silence') or (next_segment == 'silence') or (next_segment == 'end'):
-            drop_idcs.append(curr_segment['index'])
-
-    cur_track_data = cur_track_data.drop(drop_idcs, axis=0)
-
-    boundaries = np.unique(list(cur_track_data['segment_start'].values))
-
-    return boundaries
-
-
-def get_baseline_boundaries(track_dur, n_boundaries):
-    """Takes the number of annotations per track and the track duration.
-    The boundaries are then spread equally along the time axis.
-
-    Parameters
-    ----------
-    track_dur : float
-        Duration of the track in seconds.
-    
-    n_boundaries : int
-        Number of boundaries given the annotations.
-
-    Returns
-    -------
-    boundaries : np.ndarray
-        Positions of the boundaries in seconds.
-    """
-
-    boundaries = np.linspace(0, track_dur, num=int(n_boundaries))
-
-    return boundaries
+    return salami_data
 
 
 def main():
     PATH_DATA = os.path.join('..', '02_cnn', 'data')
     path_annotations = os.path.join(PATH_DATA, 'salami_annotations')
-    jsd_track_dur = pd.read_csv(os.path.join('salami_track_durations.csv'))
+    track_durs = pd.read_csv(os.path.join('salami_track_durations.csv'))
+    track_durs = track_durs.astype(str)
+
+    salami_data = load_salami(track_durs, path_annotations)
+    
+    silence_start = salami_data[(salami_data['segment_start'] == 0) & (salami_data['label'] == 'silence')]
+    silence_start_median = silence_start.groupby('label').median()['segment_dur'].values[0]
+    silence_end = salami_data[(salami_data['segment_start'] != 0) & (salami_data['label'] == 'silence')]
+    silence_end_median = silence_end.groupby('label').median()['segment_dur'].values[0]
+
+    print('Start median: {}, End Median: {}'.format(silence_start_median, silence_end_median))
 
     # for evaluation
     F_05 = 0
@@ -70,19 +64,15 @@ def main():
         Ps = []
         Rs = []
 
-        for _, cur_track in jsd_track_dur.iterrows():
-            cur_track_path = os.path.join(path_annotations, '{}.txt'.format(int(cur_track['track_name'])))
+        for _, cur_track_data in salami_data.groupby('track_name'):
+            baseline_track = eqdist_utils.get_baseline_segments(cur_track_data.tail(1)['segment_end'].values[0],
+                                                                cur_track_data.shape[0],
+                                                                silence_start_median,
+                                                                silence_end_median)
+            # print(baseline_track)
+            cur_boundaries_ref = jsd_utils.get_boundaries(cur_track_data, musical_only=True)
+            cur_boundaries_est = jsd_utils.get_boundaries(baseline_track, musical_only=True)
 
-            try:
-                cur_boundaries_ref = pd.read_csv(cur_track_path, sep='\t', header=None, names=['segment_start', 'label'])
-            except FileNotFoundError:
-                # print(cur_track_path)
-                continue
-
-            cur_boundaries_ref['label'] = cur_boundaries_ref['label'].apply(lambda x: x.lower())
-            cur_boundaries_ref = filter_boundaries(cur_boundaries_ref)
-
-            cur_boundaries_est = get_baseline_boundaries(cur_track['duration'], cur_boundaries_ref.shape[0])
             F, P, R = mir_eval.onset.f_measure(cur_boundaries_ref,
                                                cur_boundaries_est,
                                                window=cur_window)
