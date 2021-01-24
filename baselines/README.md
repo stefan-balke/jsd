@@ -25,6 +25,11 @@ Run these commands and you will be able to reproduce the paper's numbers.
 
 ### Feature Extraction
 
+* Salami: `python extract_features_salami.py --src /Volumes/AudioDB/SALAMI/salami-2-0_flat/ --dest data/salami_features --annos ../02_cnn/data/salami_annotations/`
+* JSD: `python extract_features_jsd.py --src /Volumes/AudioDB/JSD/wav_orig/ --dest data/jsd_features`
+
+### Evaluation
+
 * Salami:
 * JSD:
 

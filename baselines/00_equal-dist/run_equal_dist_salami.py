@@ -43,7 +43,7 @@ def main():
     track_durs = track_durs.astype(str)
 
     salami_data = load_salami(track_durs, path_annotations)
-    
+
     silence_start = salami_data[(salami_data['segment_start'] == 0) & (salami_data['label'] == 'silence')]
     silence_start_median = silence_start.groupby('label').median()['segment_dur'].values[0]
     silence_end = salami_data[(salami_data['segment_start'] != 0) & (salami_data['label'] == 'silence')]
