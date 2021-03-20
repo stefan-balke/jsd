@@ -309,7 +309,18 @@ def stats_per_segment_class(track_db, path_output):
     """
 
     track_db_segments = track_db.groupby('segment_class')
-    output = track_db_segments.agg({'segment_dur': [np.sum, np.mean, np.min, np.max]})
+    output = track_db_segments.agg({'segment_dur': ['count', np.sum, np.mean, np.min, np.max]})
+
+    # convert seconds to minutes
+    output[('segment_dur', 'sum')] = output[('segment_dur', 'sum')] / 60
+    output[('segment_dur', 'mean')] = output[('segment_dur', 'mean')] / 60
+    output[('segment_dur', 'amin')] = output[('segment_dur', 'amin')] / 60
+    output[('segment_dur', 'amax')] = output[('segment_dur', 'amax')] / 60
+
+    output.loc['sum'] = 0
+    output.loc['sum', ('segment_dur', 'count')] = output[('segment_dur', 'count')].sum()
+    output.loc['sum', ('segment_dur', 'sum')] = output[('segment_dur', 'sum')].sum()
+
     output.to_csv(os.path.join(path_output, 'stats_per_segment_class.csv'))
 
 
@@ -350,29 +361,28 @@ def stats_per_instrument(track_db, path_output):
             print('Warning: Instrument "{}" is not specified!'.format(cur_abbr))
 
         output.loc[output[output['abbr'] == cur_abbr].index,
-                'jsd_n_chorusses'] = cur_row['instrument_solo']
+                   'jsd_n_chorusses'] = cur_row['instrument_solo']
 
     output['jsd_n_solos'] = 0
     for cur_abbr, cur_row in counts_solo.to_frame().iterrows():
         output.loc[output[output['abbr'] == cur_abbr].index,
-                'jsd_n_solos'] = cur_row['instrument_solo']
+                   'jsd_n_solos'] = cur_row['instrument_solo']
 
     output['trans_perc'] = output['wjd_n_solos'] / output['jsd_n_solos'] * 100
     # add sum line
     output = output.append(output.sum(numeric_only=True), ignore_index=True)
     # except for trans_perc take the mean
     output.loc[output.tail(1).index.item(),
-            'trans_perc'] = output.iloc[:-1]['trans_perc'].mean()
+               'trans_perc'] = output.iloc[:-1]['trans_perc'].mean()
 
     with open('figures_statistics/overview_table.tex', 'w') as fh:
         fh.write(output.to_latex(index=True,
-                                columns=['abbr', 'name', 'jsd_n_solos',
-                                        'jsd_n_chorusses', 'wjd_n_solos', 'trans_perc'],
-                                float_format="{:0.2f}".format))
+                                 columns=['abbr', 'name', 'jsd_n_solos',
+                                          'jsd_n_chorusses', 'wjd_n_solos', 'trans_perc'],
+                                 float_format="{:0.2f}".format))
 
 
 if __name__ == '__main__':
-
     # setting global variables
     PATH_OUTPUT = 'figures_statistics'
     PATH_DATA = 'data'
@@ -383,6 +393,21 @@ if __name__ == '__main__':
 
     jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
     nr_tracks = len(jsd_track_db['track_name'].unique())
+    print('# of tracks: {}'.format(nr_tracks))
+    print('# of segments: {}'.format(jsd_track_db.shape[0]))
+    print('# of musical boundaries: {}'.format(jsd_track_db[jsd_track_db['is_musical'] == True].shape[0]))
+    print('# of non-musical boundaries: {}'.format(jsd_track_db[jsd_track_db['is_musical'] != True].shape[0]))
+
+    # n_musical = []
+    # n_non_musical = []
+    # print(jsd_track_db[jsd_track_db['is_musical'] != True].shape[0])
+    # for cur_track_name in jsd_track_db['track_name'].unique():
+    #     cur_jsd_track = jsd_track_db[jsd_track_db['track_name'] == cur_track_name]
+    #     n_musical.append(cur_jsd_track[cur_jsd_track['is_musical'] == True].shape[0])
+    #     n_non_musical.append(cur_jsd_track[cur_jsd_track['is_musical'] != True].shape[0])
+
+    # print(n_musical)
+    # print(n_non_musical)
 
     stats_per_segment_class(jsd_track_db, PATH_OUTPUT)
     stats_per_instrument(jsd_track_db, PATH_OUTPUT)

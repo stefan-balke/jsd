@@ -36,6 +36,8 @@ def load_jsd(path_annotation_files):
         cur_csv = pd.read_csv(cur_path_anno, usecols=[0, 1, 2, 3], sep=';')
         cur_csv['track_name'] = track_name
 
+        cur_csv = flag_non_musical_segments(cur_csv)
+
         annotations = annotations.append(cur_csv)
 
     annotations = annotations.reset_index(drop=True)
@@ -148,7 +150,7 @@ def get_instruments():
 
 def get_boundaries(track_data, musical_only=False):
     """Helper function to go from segments to boundaries.
-    Start and end positions are concatenated and only the unique values survive.
+    Start positions of each segment are taken as boundaries and only the unique values survive.
 
     Parameters
     ----------
@@ -160,21 +162,20 @@ def get_boundaries(track_data, musical_only=False):
 
     Returns
     -------
-    boundaries : np.ndarray, shape=(N, 2)
-        Start and end positions from the boundary.
+    boundaries : np.ndarray, shape=(N, 1)
+        Boundary positions.
     """
     cur_track_data = track_data.copy()
 
     if musical_only:
-        cur_track_data = filter_segments(cur_track_data)
+        cur_track_data = cur_track_data[cur_track_data['is_musical'] == True]
 
-    boundaries = np.unique(list(cur_track_data['segment_start'].values) +
-                           list(cur_track_data['segment_end'].values))
+    boundaries = np.unique(list(cur_track_data['segment_start'].values))
 
     return np.sort(boundaries)
 
 
-def filter_segments(track_data):
+def flag_non_musical_segments(track_data):
     """Filter segments to musical boundaries, i.e. containing no silence boundaries
         and only boundaries which are surrounded by musical parts.
 
@@ -190,20 +191,27 @@ def filter_segments(track_data):
     """
     cur_track_data = track_data.copy()
 
-    # filter boundaries to musical boundaries
-    drop_idcs = cur_track_data[cur_track_data['label'] == 'silence'].index.tolist()
-    drop_idcs.extend(cur_track_data[cur_track_data['label'] == 'end'].index.tolist())
+    cur_track_data['is_musical'] = True
+    # drop_idcs = cur_track_data[cur_track_data['label'] == 'silence'].index.tolist()
+    # drop_idcs.extend(cur_track_data[cur_track_data['label'] == 'end'].index.tolist())
+    # first and last bounardy are always non-musical
+    non_musical_idcs = [cur_track_data.index[0], cur_track_data.index[-1]]
 
-    # filter trivial boundaries like silence->intro or outro->silence
+    # filter all boundaries to musical boundaries
     for cur_idx in range(1, len(cur_track_data) - 1):
         prev_segment = cur_track_data.iloc[cur_idx - 1]['label']
         curr_segment = cur_track_data.reset_index().iloc[cur_idx]
         next_segment = cur_track_data.iloc[cur_idx + 1]['label']
 
+        # filter trivial boundaries like silence->intro or outro->silence
         # check if surrounding segments contain music
         if (prev_segment == 'silence') or (next_segment == 'silence') or (next_segment == 'end'):
-            drop_idcs.append(curr_segment['index'])
+            non_musical_idcs.append(curr_segment['index'])
 
-    cur_track_data = cur_track_data.drop(drop_idcs, axis=0)
+        # non-musical segments in salami dataset
+        if (prev_segment == 'z') or (next_segment == 'z'):
+            non_musical_idcs.append(curr_segment['index'])
+
+    cur_track_data.loc[cur_track_data.index.isin(non_musical_idcs), 'is_musical'] = 'False'
 
     return cur_track_data
