@@ -4,3 +4,4 @@
 __pycache__/
 *.npz
 figures_statistics/
+/baselines/data/
