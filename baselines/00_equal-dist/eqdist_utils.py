@@ -10,7 +10,7 @@ def get_baseline_segments(track_dur, n_segments, silence_start, silence_end):
     ----------
     track_dur : float
         Duration of the track in seconds.
-    
+
     n_segments : int
         Number of segments given in the annotations.
 

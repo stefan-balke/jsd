@@ -7,9 +7,20 @@
     Expo (pp. 452–455). New York City, NY, USA.
 """
 
+import os
+import sys
 import numpy as np
 import scipy.signal
+from scipy.ndimage import filters
+import pandas as pd
+import librosa
+import tqdm
 from scipy import signal
+import mir_eval
+
+# hacky relative import
+sys.path.append(os.path.join('..', '..'))
+import jsd_utils
 
 
 def compute_ssm(X):
@@ -297,3 +308,190 @@ def detect_peaks(activations, threshold=0.5, fps=100, include_scores=False, comb
         return stamps / float(fps), scores
     else:
         return stamps / float(fps)
+
+
+def analysis(features, params, kernel_size):
+    """Analysis of the audiofeature file with the current parameter settings.
+    Calculates the SSM, NC and peaks of NC.
+
+    Parameters
+    ----------
+    features : np.array
+        Audiofeatures of the track extracted by extract_features_audio.py
+    params : tuple
+        Parameter tuples (smoothing_factor, downsampling_factor)
+    kernel_size : int
+        Kernel size of the gaussian kernel for Foote
+
+    Returns
+    -------
+    ssm_f_cens : np.array
+        SSM computed with CENS features
+    ssm_f_mfcc : np.array
+        SSM computed with MFCC features
+    nc_cens : np.array
+        NC computed for SSM based on CENS features
+    nc_mfcc : np.array
+        NC computed for SSM based on MFCC features
+    boundaries_cens : np.array
+        Array containing the peaks of the NC based on CENS features
+    boundaries_mfcc : np.array
+        Array containing the peaks of the NC based on MFCC features
+
+    """
+
+    # read features and abolish first two bands
+    f_mfcc = features['f_mfcc'][2:]
+
+    # normalize MFCC
+    cur_f_mfcc = librosa.util.normalize(f_mfcc, norm=2, axis=0)
+
+    # smooth MFCC
+    cur_f_mfcc = smooth_features(cur_f_mfcc, win_len_smooth=params[0])
+
+    # downsample by params[1]
+    cur_f_mfcc = cur_f_mfcc[:, ::params[1]]
+
+    # compute the SSM
+    ssm_f_mfcc = compute_ssm(cur_f_mfcc)
+    ssm_f_mfcc /= ssm_f_mfcc.max()
+
+    # Compute gaussian kernel
+    G = compute_kernel_checkerboard_gaussian(kernel_size / 2)
+
+    # Compute the novelty curve
+    nc_mfcc = compute_novelty_SSM(ssm_f_mfcc, G, exclude=True)
+    nc_mfcc = np.abs(nc_mfcc) / nc_mfcc.max()
+    # nc_mfcc = filters.gaussian_filter1d(nc_mfcc, sigma=2)
+
+    return ssm_f_mfcc, nc_mfcc
+
+
+def foote_experiment(track_db, params, thresholds, feature_rate, path_features):
+    eval_output = []
+
+    # analyze and evaluate the dataset with different kernel sizes
+    for cur_params in params:
+        cur_kernel_size = cur_params['kernel_size']
+        cur_wl_ds = cur_params['wl_ds']
+        print('--> Params: {}, Kernel Size: {}'.format(cur_wl_ds, cur_kernel_size))
+
+        # loop over all tracks
+        for cur_track_name in tqdm.tqdm(track_db['track_name'].unique()):
+            cur_track = track_db[track_db['track_name'] == cur_track_name]
+            cur_boundaries_ref = jsd_utils.get_boundaries(cur_track, musical_only=True)
+
+            try:
+                assert len(cur_boundaries_ref) > 0
+            except AssertionError:
+                # print('Skipping Track {}: No musical boundaries.'.format(cur_track_name))
+                continue
+
+            # get the non-musical boundaries only
+            cur_boundaries_ref_nm = jsd_utils.get_boundaries(cur_track, musical_only=False)
+            cur_boundaries_ref_nm = np.setdiff1d(cur_boundaries_ref_nm, cur_boundaries_ref)
+
+            # import info for the evaluation region
+            time_first_musical_boundary = np.min(cur_boundaries_ref)
+            time_last_musical_boundary = np.max(cur_boundaries_ref)
+
+            # get path to audiofeature file
+            cur_path_features = os.path.join(path_features, cur_track_name + '.npz')
+
+            # load features
+            features = np.load(cur_path_features)
+
+            # analyze the audio features
+            (_, nc_mfcc) = analysis(features, cur_wl_ds, cur_kernel_size)
+
+            # keep boundaries for visualization
+            boundaries_mfcc = []
+            boundaries_mfcc_eval = []
+            est_boundaries_exclude = []
+
+            for cur_threshold in thresholds:
+                # Compute the peaks of the NCs
+                # boundaries_mfcc = peak_picking(nc_mfcc, abs_thresh=np.tile(cur_threshold, len(nc_mfcc)))
+                # boundaries_mfcc = detect_peaks(nc_mfcc, threshold=cur_threshold, fps=feature_rate / cur_wl_ds[1])
+                prominence = 0.1
+                cur_boundaries_mfcc = signal.find_peaks(nc_mfcc, height=cur_threshold, prominence=prominence)[0]
+                cur_boundaries_mfcc = np.asarray(cur_boundaries_mfcc)
+                cur_boundaries_mfcc = np.sort(cur_boundaries_mfcc)
+                boundaries_mfcc.append(cur_boundaries_mfcc.copy())
+
+                # convert frame indices to seconds
+                cur_boundaries_mfcc = cur_boundaries_mfcc / (feature_rate / cur_wl_ds[1])
+
+                # filter out boundary candidates around non-musical boundaries
+                window = 3.0  # in seconds
+                cur_est_boundaries_exclude_idcs = []
+
+                for cur_boundary_nm in cur_boundaries_ref_nm:
+                    # check if estimate is in near nm-boundary
+                    cur_excludes = np.abs(cur_boundaries_mfcc - cur_boundary_nm)
+                    cur_excludes = np.where(cur_excludes <= window)
+                    cur_excludes = cur_excludes[0].tolist()
+
+                    cur_est_boundaries_exclude_idcs.extend(cur_excludes)
+
+                # add boundaries outside evaluation window [t_first - window, t_last + window]
+                cur_est_boundaries_exclude_idcs.extend(np.where(cur_boundaries_mfcc < (time_first_musical_boundary - window))[0].tolist())
+                cur_est_boundaries_exclude_idcs.extend(np.where(cur_boundaries_mfcc > (time_last_musical_boundary + window))[0].tolist())
+
+                cur_est_boundaries_exclude_idcs = np.asarray(cur_est_boundaries_exclude_idcs)
+                cur_est_boundaries_exclude_idcs = np.unique(cur_est_boundaries_exclude_idcs)
+
+                if cur_est_boundaries_exclude_idcs.shape[0] > 1:
+                    cur_est_boundaries_exclude = cur_boundaries_mfcc[cur_est_boundaries_exclude_idcs]
+                else:
+                    cur_est_boundaries_exclude = []
+
+                est_boundaries_exclude.append(cur_est_boundaries_exclude)
+                cur_boundaries_mfcc = np.delete(cur_boundaries_mfcc, cur_est_boundaries_exclude_idcs)
+                boundaries_mfcc_eval.append(cur_boundaries_mfcc)
+
+                cur_eval_row = {}
+                cur_eval_row['track_name'] = cur_track_name
+                cur_eval_row['wl_ds'] = cur_wl_ds
+                cur_eval_row['kernel_size'] = cur_kernel_size
+                cur_eval_row['threshold'] = cur_threshold
+
+                # evaluate the boundaries for 0.5 seconds
+                cur_eval_row['F_mfcc_05'], cur_eval_row['P_mfcc_05'], cur_eval_row['R_mfcc_05'] = \
+                    mir_eval.onset.f_measure(cur_boundaries_ref, cur_boundaries_mfcc, window=0.5)
+
+                # evaluate the boundaries for 3.0 seconds
+                cur_eval_row['F_mfcc_3'], cur_eval_row['P_mfcc_3'], cur_eval_row['R_mfcc_3'] = \
+                    mir_eval.onset.f_measure(cur_boundaries_ref, cur_boundaries_mfcc, window=3.0)
+
+                # add dataframe of one track to dataframe of all songs
+                eval_output.append(cur_eval_row)
+
+            # debugging visualization
+            debug = False
+            if debug:
+                import matplotlib.pyplot as plt
+                scaler = (feature_rate / cur_wl_ds[1])
+                threshold_idx = 0
+                fig, ax = plt.subplots(nrows=2)
+                fig.suptitle('{}, Params: {}, Threshold: {:.2f}'.format(cur_track_name, cur_params, thresholds[threshold_idx]))
+                ax[0].imshow(features['f_mfcc'][2:], origin='lower', aspect='auto')
+                ax[1].plot(nc_mfcc, label='NC')
+                ax[1].set_xlim(0, len(nc_mfcc))
+                ax[1].set_ylim(0, 1)
+
+                ax[1].vlines(np.round(cur_boundaries_ref * scaler), 0.8, 1, color='g', label='Ref.')
+                ax[1].vlines(np.round(cur_boundaries_ref_nm * scaler), 0.7, 1, color='b', label='Ref. NM')
+
+                ax[1].vlines(boundaries_mfcc[threshold_idx], 0, 0.8, color='r', label='Est.')
+                ax[1].vlines(np.round(boundaries_mfcc_eval[threshold_idx] * scaler), 0, 0.3, color='k', label='Est. Eval')
+                if len(est_boundaries_exclude[threshold_idx]) > 0:
+                    ax[1].vlines(np.round(est_boundaries_exclude[threshold_idx] * scaler), 0, 0.5, color='y', label='Excluded')
+
+                ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+                plt.show()
+
+    eval_output = pd.DataFrame(eval_output)
+
+    return eval_output

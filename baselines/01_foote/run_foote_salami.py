@@ -1,52 +1,56 @@
 """
-    This script analyses the audiofeatures with foote for different parametersettings
+    This script analyses the audiofeatures with foote for different parameter settings
     and evaluates the data with the annotations as reference. The results are stored as
     csv files.
 """
 
 import sys
 import os
-import glob
 import pandas as pd
 import tqdm
 import yaml
-import mir_eval
 import numpy as np
 import foote_utils
-from scipy import signal
+import matplotlib.pyplot as plt
 
 # hacky relative import
 sys.path.append(os.path.join('..', '..'))
 import jsd_utils
+sys.path.append(os.path.join('..'))
+import salami_utils
 
 
 def main():
-    PATH_DATA_JSD = os.path.join('..', '..', 'data')
-    path_annotations = os.path.join(PATH_DATA_JSD, 'annotations_csv')
-    path_annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
-    jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
+    PATH_DATA = os.path.join('..', 'data')
+    path_annotations = os.path.join(PATH_DATA, 'salami_annotations')
+    track_durs = pd.read_csv(os.path.join(PATH_DATA, 'salami_track_durations.csv'))
+    track_durs = track_durs.astype(str)
+
+    salami_track_db = salami_utils.load_salami(track_durs, path_annotations)
 
     path_output = 'foote_evaluation'
-    path_data = os.path.join('..', 'data')
-    path_features = os.path.join(path_data, 'foote_jsd_features')
+    path_features = os.path.join(PATH_DATA, 'foote_salami_features')
     feature_rate = 10
 
     # parameter tuning result on training set:
     # 0.5s = (9, 4)
     # 3.0s = (36, 4)
     params = [{'kernel_size': 40, 'wl_ds': (9, 4)},
-              {'kernel_size': 80, 'wl_ds': (36, 4)}]
-    thresholds = np.linspace(0, 1, 21)
+              {'kernel_size': 80, 'wl_ds': (36, 4)},
+              {'kernel_size': 160, 'wl_ds': (36, 4)}]
+    # params = [{'kernel_size': 80, 'wl_ds': (9, 4)},
+    #           {'kernel_size': 80, 'wl_ds': (36, 4)}]
+    thresholds = np.linspace(0, 1.0, 21)
 
     # make sure the folders exist before trying to save things
-    if not os.path.isdir(os.path.join(path_data, path_output)):
-        os.mkdir(os.path.join(path_data, path_output))
+    if not os.path.isdir(os.path.join(PATH_DATA, path_output)):
+        os.mkdir(os.path.join(PATH_DATA, path_output))
 
     # call main experiment
-    eval_output = foote_utils.foote_experiment(jsd_track_db, params, thresholds, feature_rate, path_features)
+    eval_output = foote_utils.foote_experiment(salami_track_db, params, thresholds, feature_rate, path_features)
 
     # evaluate on different splits
-    with open('../../splits/jsd_fold-0.yml') as fh:
+    with open('../data/salami_split.yml') as fh:
         split = yaml.load(fh, Loader=yaml.FullLoader)
 
     # statistics on evaluation results
@@ -55,7 +59,7 @@ def main():
     for cur_key in split.keys():
         # get all tracks for the current split
         cur_tracks = split[cur_key]
-        cur_eval_group = eval_output[eval_output['track_name'].isin(cur_tracks)]
+        cur_eval_group = eval_output[eval_output['track_name'].astype(int).isin(cur_tracks)]
 
         for cur_name, cur_group in cur_eval_group.groupby(by=['wl_ds', 'kernel_size', 'threshold']):
             cur_means = cur_group.mean()
@@ -67,7 +71,7 @@ def main():
     eval_means['threshold'] = eval_means['threshold'].round(2)
 
     # save dataframe as csv
-    eval_means.to_csv(os.path.join(path_data, path_output, 'eval_means_jsd.csv'), sep=';')
+    eval_means.to_csv(os.path.join(PATH_DATA, path_output, 'eval_means_salami.csv'), sep=';')
 
     # get best thresholds on validation set
     best_thresholds = []
