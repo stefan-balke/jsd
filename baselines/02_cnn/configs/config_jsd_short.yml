@@ -5,6 +5,6 @@ subsampling: 6
 target_smear: 1.5
 class_balance: 0.2
 input_shape: [116, 80, 1]
-input_data: ['jsd_features', ]
-target_data: ['jsd_targets', ]
+input_data: ['cnn_jsd_features', ]
+target_data: ['cnn_jsd_targets', ]
 split_data: ['../../splits/jsd_fold-0.yml', ]
