@@ -13,6 +13,13 @@ import utils
 import mir_eval
 import pescador
 import yaml
+import glob
+
+# hacky relative import
+sys.path.append(os.path.join('..', '..'))
+import jsd_utils
+sys.path.append(os.path.join('..'))
+import salami_utils
 
 
 def predict(pathes_X, pathes_y, path_model, path_weights, config):
@@ -47,25 +54,98 @@ def predict(pathes_X, pathes_y, path_model, path_weights, config):
         predictions.append(cur_predictions)
         gts.append(cur_gts)
         songs.append(cur_song)
+        import pdb
+        pdb.set_trace()
 
     return predictions, gts, songs
 
 
-def evaluate(songs, predictions, gts, window, fps, threshold):
-
+def evaluate(songs, predictions, gts, window, feature_rate, threshold):
     Fs = []
     Ps = []
     Rs = []
 
     for cur_song_id, cur_song in enumerate(songs):
-        cur_pred = predictions[cur_song_id]
-        cur_gt = gts[cur_song_id]
+        cur_nc = np.asarray(predictions[cur_song_id])
 
-        estimated_onsets = utils.detect_peaks(np.asarray(cur_pred), fps=fps, threshold=threshold)
-        reference_onsets = np.where(np.asarray(cur_gt) == 1.0)[0] / fps
+        # get ground-truth
+        cur_track = gts[gts['track_name'] == songs[cur_song_id]]
 
-        F, P, R = mir_eval.onset.f_measure(reference_onsets,
-                                           estimated_onsets,
+        # get reference boundaries
+        cur_boundaries_ref = jsd_utils.get_boundaries(cur_track, musical_only=True)
+
+        try:
+            assert len(cur_boundaries_ref) > 0
+        except AssertionError:
+            print('Skipping Track {}: No musical boundaries.'.format(cur_track_name))
+            continue
+
+        # get the non-musical boundaries only
+        cur_boundaries_ref_nm = jsd_utils.get_boundaries(cur_track, musical_only=False)
+        cur_boundaries_ref_nm = np.setdiff1d(cur_boundaries_ref_nm, cur_boundaries_ref)
+
+        # import info for the evaluation region
+        time_first_musical_boundary = np.min(cur_boundaries_ref)
+        time_last_musical_boundary = np.max(cur_boundaries_ref)
+
+        # keep boundaries for visualization
+        est_boundaries_exclude = []
+
+        # Compute the peaks of the NCs
+        cur_boundaries = utils.detect_peaks(cur_nc, fps=feature_rate, threshold=threshold)
+
+        # filter out boundary candidates around non-musical boundaries
+        window = 3.0  # in seconds
+        cur_est_boundaries_exclude_idcs = []
+
+        for cur_boundary_nm in cur_boundaries_ref_nm:
+            # check if estimate is in near nm-boundary
+            cur_excludes = np.abs(cur_boundaries - cur_boundary_nm)
+            cur_excludes = np.where(cur_excludes <= window)
+            cur_excludes = cur_excludes[0].tolist()
+
+            cur_est_boundaries_exclude_idcs.extend(cur_excludes)
+
+        # add boundaries outside evaluation window [t_first - window, t_last + window]
+        cur_est_boundaries_exclude_idcs.extend(np.where(cur_boundaries < (time_first_musical_boundary - window))[0].tolist())
+        cur_est_boundaries_exclude_idcs.extend(np.where(cur_boundaries > (time_last_musical_boundary + window))[0].tolist())
+
+        cur_est_boundaries_exclude_idcs = np.asarray(cur_est_boundaries_exclude_idcs)
+        cur_est_boundaries_exclude_idcs = np.unique(cur_est_boundaries_exclude_idcs)
+
+        if cur_est_boundaries_exclude_idcs.shape[0] > 1:
+            cur_est_boundaries_exclude = cur_boundaries[cur_est_boundaries_exclude_idcs]
+        else:
+            cur_est_boundaries_exclude = []
+
+        est_boundaries_exclude.append(cur_est_boundaries_exclude)
+        cur_boundaries_est = np.delete(cur_boundaries, cur_est_boundaries_exclude_idcs)
+
+        # debugging visualization
+        debug = True
+        if debug:
+            import matplotlib.pyplot as plt
+            scaler = feature_rate
+            fig, ax = plt.subplots(nrows=1)
+            fig.suptitle('{}, Threshold: {:.2f}'.format(cur_song, threshold))
+            ax.plot(cur_nc, label='NC')
+            ax.set_xlim(0, len(cur_nc))
+            ax.set_ylim(0, 1)
+
+            ax.vlines(np.round(cur_boundaries_ref * scaler), 0.8, 1, color='g', label='Ref.')
+            ax.vlines(np.round(cur_boundaries_ref_nm * scaler), 0.7, 1, color='b', label='Ref. NM')
+
+            ax.vlines(np.round(cur_boundaries * scaler), 0, 0.8, color='r', label='Est.')
+            ax.vlines(np.round(cur_boundaries_est * scaler), 0, 0.3, color='k', label='Est. Eval')
+            if len(cur_est_boundaries_exclude) > 0:
+                ax.vlines(np.round(cur_est_boundaries_exclude * scaler), 0, 0.5, color='y', label='Excluded')
+
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+            plt.show()
+
+        F, P, R = mir_eval.onset.f_measure(cur_boundaries_ref,
+                                           cur_boundaries_est,
                                            window=window)
 
         # print('#{}: F: {}, P: {}, R: {}'.format(cur_song_id, F, P, R))
@@ -78,7 +158,7 @@ def evaluate(songs, predictions, gts, window, fps, threshold):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DNN Testing')
-    parser.add_argument('--path_data', type=str, default='data')
+    parser.add_argument('--path_data', type=str, default='../data')
     parser.add_argument('--path_results', type=str)
     parser.add_argument('--eval_only', action='store_true', default=False)
     parser.add_argument('--bagging', type=int, default=1, help='Number of bagged networks.')
@@ -117,6 +197,19 @@ if __name__ == '__main__':
         print('No peak_picking_thresholds.yml found. Please run "optimize_peak_picking.py" first.')
         sys.exit()
 
+    # load annotations
+    PATH_DATA_SALAMI = os.path.join('..', 'data')
+    path_annotations = os.path.join(PATH_DATA_SALAMI, 'salami_annotations')
+    track_durs = pd.read_csv(os.path.join(PATH_DATA_SALAMI, 'salami_track_durations.csv'))
+    track_durs = track_durs.astype(str)
+    salami_track_db = salami_utils.load_salami(track_durs, path_annotations)
+
+    PATH_DATA_JSD = os.path.join('..', '..', 'data')
+    path_annotations = os.path.join(PATH_DATA_JSD, 'annotations_csv')
+    path_annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
+    jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
+
+    annotations = pd.concat([salami_track_db, jsd_track_db])
     bags = []
 
     for cur_bag_idx in range(args.bagging):
@@ -167,9 +260,11 @@ if __name__ == '__main__':
     # evaluation
     # Evaluate with 0.5 s tolerance
     fps = config['fs'] / (config['hop_size'] * config['subsampling'])
-    F_05, P_05, R_05 = evaluate(songs, predictions, gts, window=0.5, fps=fps, threshold=thresholds['thresh_05'])
+    F_05, P_05, R_05 = evaluate(songs, predictions, annotations, window=0.5,
+                                feature_rate=fps, threshold=thresholds['thresh_05'])
     print('0.5 s window: F={0:.3f}, P={1:.3f}, R={2:.3f}'.format(F_05, P_05, R_05))
 
     # Evaluate with 3.0 s tolerance
-    F_3, P_3, R_3 = evaluate(songs, predictions, gts, window=3.0, fps=fps, threshold=thresholds['thresh_3'])
+    F_3, P_3, R_3 = evaluate(songs, predictions, annotations, window=3.0,
+                             feature_rate=fps, threshold=thresholds['thresh_3'])
     print('3.0 s window: F={0:.3f}, P={1:.3f}, R={2:.3f}'.format(F_3, P_3, R_3))

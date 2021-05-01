@@ -28,7 +28,7 @@ def load_jsd(path_annotation_files):
     annotations = pd.DataFrame(None)
 
     # load CSV files
-    for cur_path_anno in tqdm.tqdm(path_annotation_files, desc='Loading Annotations'):
+    for cur_path_anno in tqdm.tqdm(path_annotation_files, desc='Loading JSD'):
 
         track_name = os.path.splitext(os.path.basename(cur_path_anno))[0]
 

@@ -12,7 +12,7 @@ import jsd_utils
 def load_salami(track_durs, path_annotations):
     salami_data = []
 
-    for cur_track_path in tqdm.tqdm(glob.glob(os.path.join(path_annotations, '*.txt'))):
+    for cur_track_path in tqdm.tqdm(glob.glob(os.path.join(path_annotations, '*.txt')), desc='Loading Salami'):
         cur_track_name = os.path.splitext(os.path.basename(cur_track_path))[0]
 
         try:

@@ -59,11 +59,11 @@ def main(path_data, path_inputs, path_targets, path_test,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DNN Testing')
-    parser.add_argument('--path_data', type=str, default='data')
+    parser.add_argument('--path_data', type=str, default='../data')
     parser.add_argument('--path_inputs', type=str, default='salami_features')
     parser.add_argument('--path_targets', type=str, default='salami_targets')
-    parser.add_argument('--path_model', type=str, default='results/cnn_ismir2014_architecture.json')
-    parser.add_argument('--path_weights', type=str, default='results/cnn_ismir2014_weights.h5')
+    parser.add_argument('--path_model', type=str, default='results/20201230-212634-cnn_ismir2014_salami_short/architecture-0.json')
+    parser.add_argument('--path_weights', type=str, default='results/20201230-212634-cnn_ismir2014_salami_short/weights-0.h5')
     args = parser.parse_args()
 
     path_test = os.path.join(args.path_data, 'salami_test.txt')

@@ -111,7 +111,7 @@ def train(args, random_state, bag_idx, path_network, path_results):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DNN Training')
-    parser.add_argument('--path_data', type=str, default='data')
+    parser.add_argument('--path_data', type=str, default='../data')
     parser.add_argument('--path_results', type=str, default='results', help='Optional results path.')
     parser.add_argument('--bagging', type=int, default=1, help='Number of networks to train.')
     parser.add_argument('--n_epochs', type=int, default=20, help='Number of epochs.')
