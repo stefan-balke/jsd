@@ -2,6 +2,7 @@
     Optimize Peak Picking thresholds on the validation data.
 """
 import os
+import sys
 import glob
 import argparse
 import numpy as np
