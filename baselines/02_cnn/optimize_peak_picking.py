@@ -2,13 +2,21 @@
     Optimize Peak Picking thresholds on the validation data.
 """
 import os
+import glob
 import argparse
 import numpy as np
+import pandas as pd
 import utils
 import yaml
 import tqdm
 
 from dnn_testing import predict, evaluate
+
+# hacky relative import
+sys.path.append(os.path.join('..', '..'))
+import jsd_utils
+sys.path.append(os.path.join('..'))
+import salami_utils
 
 
 if __name__ == '__main__':
