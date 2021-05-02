@@ -21,7 +21,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config = utils.load_config(os.path.join(args.path_results, 'config.yml'))
-    fps = config['fs'] / (config['hop_size'] * config['subsampling'])
+    feature_rate = config['fs'] / (config['hop_size'] * config['subsampling'])
     bags = []
 
     # collect pathes
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         path_model = os.path.join(args.path_results, 'architecture-{}.json'.format(cur_bag_idx))
         path_weights = os.path.join(args.path_results, 'weights-{}.h5'.format(cur_bag_idx))
         path_pred = os.path.join(args.path_results, 'pred-valid-{}.npz'.format(cur_bag_idx))
-        fps = config['fs'] / (config['hop_size'] * config['subsampling'])
+        feature_rate = config['fs'] / (config['hop_size'] * config['subsampling'])
         data = dict()
 
         if args.eval_only:
@@ -101,10 +101,10 @@ if __name__ == '__main__':
 
     for cur_threshold in tqdm.tqdm(thresholds):
         # Evaluate with 0.5 s tolerance
-        F_05, _, _ = evaluate(songs, predictions, gts, window=0.5, fps=fps, threshold=cur_threshold)
+        F_05, _, _ = evaluate(songs, predictions, gts, window=0.5, feature_rate=feature_rate, threshold=cur_threshold)
 
         # Evaluate with 3.0 s tolerance
-        F_3, _, _ = evaluate(songs, predictions, gts, window=3.0, fps=fps, threshold=cur_threshold)
+        F_3, _, _ = evaluate(songs, predictions, gts, window=3.0, feature_rate=feature_rate, threshold=cur_threshold)
 
         if F_05_max < F_05:
             thresh_05 = cur_threshold
