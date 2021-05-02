@@ -120,21 +120,23 @@ if __name__ == '__main__':
     thresholds = np.arange(0.05, 0.95, 0.05)
     F_05_max = 0
     F_3_max = 0
+    thresh_05 = 0
+    thresh_3 = 0
 
     for cur_threshold in tqdm.tqdm(thresholds):
         # Evaluate with 0.5 s tolerance
-        F_05, _, _ = evaluate(songs, predictions, annotations, window=0.5, feature_rate=feature_rate, threshold=cur_threshold)
+        cur_F_05, _, _ = evaluate(songs, predictions, annotations, window=0.5, feature_rate=feature_rate, threshold=cur_threshold)
 
         # Evaluate with 3.0 s tolerance
-        F_3, _, _ = evaluate(songs, predictions, annotations, window=3.0, feature_rate=feature_rate, threshold=cur_threshold)
+        cur_F_3, _, _ = evaluate(songs, predictions, annotations, window=3.0, feature_rate=feature_rate, threshold=cur_threshold)
 
-        if F_05_max < F_05:
+        if cur_F_05 > F_05_max:
             thresh_05 = cur_threshold
-            F_05_max = F_05
+            F_05_max = cur_F_05
 
-        if F_3_max < F_3:
+        if cur_F_3 > F_3_max:
             thresh_3 = cur_threshold
-            F_3_max = F_3
+            F_3_max = cur_F_3
 
     # save thresholds
     data = {'thresh_05': float(thresh_05), 'thresh_3': float(thresh_3)}
