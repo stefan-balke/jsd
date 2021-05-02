@@ -22,7 +22,6 @@ if __name__ == '__main__':
 
     config = utils.load_config(os.path.join(args.path_results, 'config.yml'))
     feature_rate = config['fs'] / (config['hop_size'] * config['subsampling'])
-    bags = []
 
     # collect pathes
     PATH_X = [os.path.join(args.path_data, cur_path) for cur_path in config['input_data']]
@@ -45,13 +44,28 @@ if __name__ == '__main__':
         for cur_fn in splits[cur_ds_id]['val']:
             pathes_val_y.append(os.path.join(cur_path_y, '{}.npz'.format(cur_fn)))
 
+    # load annotations
+    PATH_DATA_SALAMI = os.path.join('..', 'data')
+    path_annotations = os.path.join(PATH_DATA_SALAMI, 'salami_annotations')
+    track_durs = pd.read_csv(os.path.join(PATH_DATA_SALAMI, 'salami_track_durations.csv'))
+    track_durs = track_durs.astype(str)
+    salami_track_db = salami_utils.load_salami(track_durs, path_annotations)
+
+    PATH_DATA_JSD = os.path.join('..', '..', 'data')
+    path_annotations = os.path.join(PATH_DATA_JSD, 'annotations_csv')
+    path_annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
+    jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
+
+    annotations = pd.concat([salami_track_db, jsd_track_db])
+
+    bags = []
+
     for cur_bag_idx in range(args.bagging):
         print('Model {}:'.format(cur_bag_idx))
 
         path_model = os.path.join(args.path_results, 'architecture-{}.json'.format(cur_bag_idx))
         path_weights = os.path.join(args.path_results, 'weights-{}.h5'.format(cur_bag_idx))
         path_pred = os.path.join(args.path_results, 'pred-valid-{}.npz'.format(cur_bag_idx))
-        feature_rate = config['fs'] / (config['hop_size'] * config['subsampling'])
         data = dict()
 
         if args.eval_only:
@@ -77,7 +91,6 @@ if __name__ == '__main__':
     # model bagging
     predictions = []
     songs = bags[0]['songs']
-    gts = bags[0]['gts']
 
     # collect data for model bagging
     if args.bagging > 1:
@@ -101,10 +114,10 @@ if __name__ == '__main__':
 
     for cur_threshold in tqdm.tqdm(thresholds):
         # Evaluate with 0.5 s tolerance
-        F_05, _, _ = evaluate(songs, predictions, gts, window=0.5, feature_rate=feature_rate, threshold=cur_threshold)
+        F_05, _, _ = evaluate(songs, predictions, annotations, window=0.5, =, threshold=cur_threshold)
 
         # Evaluate with 3.0 s tolerance
-        F_3, _, _ = evaluate(songs, predictions, gts, window=3.0, feature_rate=feature_rate, threshold=cur_threshold)
+        F_3, _, _ = evaluate(songs, predictions, annotations, window=3.0, feature_rate=feature_rate, threshold=cur_threshold)
 
         if F_05_max < F_05:
             thresh_05 = cur_threshold

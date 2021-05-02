@@ -239,7 +239,6 @@ if __name__ == '__main__':
     # model bagging
     predictions = []
     songs = bags[0]['songs']
-    gts = bags[0]['gts']
 
     # collect data for model bagging
     if args.bagging > 1:
