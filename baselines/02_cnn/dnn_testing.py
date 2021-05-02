@@ -54,8 +54,6 @@ def predict(pathes_X, pathes_y, path_model, path_weights, config):
         predictions.append(cur_predictions)
         gts.append(cur_gts)
         songs.append(cur_song)
-        import pdb
-        pdb.set_trace()
 
     return predictions, gts, songs
 
