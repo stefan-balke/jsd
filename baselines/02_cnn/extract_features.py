@@ -80,10 +80,10 @@ def extract_features(params):
             anno = anno.drop(anno.index[-1])
     elif input_ds == 'jsd':
         # filter out first silence boundary (it's the beginning of the song)
-        if anno.head(1)['label'].lower() == 'silence':
+        if anno.head(1)['label'].str.lower() == 'silence':
             anno = anno.drop(0)
 
-        if anno.tail(1)['label'].lower() == 'silence':
+        if anno.tail(1)['label'].str.lower() == 'silence':
             anno = anno.drop(anno.tail(1).index)
 
     # from seconds to frame indices
