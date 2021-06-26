@@ -78,6 +78,9 @@ def extract_features(params):
         # sometimes the last boundaries are beyond the song duration (mp3 problem?)
         if np.floor(anno[0][anno.index[-1]] * feature_rate).astype('int') >= targets.shape[0]:
             anno = anno.drop(anno.index[-1])
+
+        # from seconds to frame indices
+        target_idcs = np.floor(anno[0].values * feature_rate).astype('int')
     elif input_ds == 'jsd':
         # filter out first silence boundary (it's the beginning of the song)
         if anno.head(1)['label'].values[0].lower() == 'silence':
@@ -86,8 +89,8 @@ def extract_features(params):
         if anno.tail(1)['label'].values[0].lower() == 'silence':
             anno = anno.drop(anno.tail(1).index)
 
-    # from seconds to frame indices
-    target_idcs = np.floor(anno[0].values * feature_rate).astype('int')
+        # from seconds to frame indices
+        target_idcs = np.floor(anno['segment_start'].values * feature_rate).astype('int')
 
     # set boundaries
     try:
