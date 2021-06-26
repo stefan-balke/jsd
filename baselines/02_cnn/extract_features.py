@@ -83,7 +83,7 @@ def extract_features(params):
         if anno.loc[0, 'label'].lower() == 'silence':
             anno = anno.drop(0)
 
-        if anno.loc[-1, 'label'].lower() == 'end':
+        if anno.loc[-1, 'label'].lower() == 'silence':
             anno = anno.drop(anno.index[-1])
 
     # from seconds to frame indices
