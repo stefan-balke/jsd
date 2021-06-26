@@ -29,6 +29,7 @@ def extract_features(params):
 
     """
     # extract params
+    input_ds = params['input_ds']
     fn_audio = params['fn_audio']
     win_size = params['win_size']
     hop_size = params['hop_size']
@@ -39,11 +40,15 @@ def extract_features(params):
     path_annos = params['path_annos']
     path_targets = params['path_targets']
 
-    # load corresponding annotation file
-    path_anno = os.path.join(path_annos, file_id + '.txt')
-
     try:
-        anno = pd.read_csv(path_anno, header=None, sep='\t')
+        if input_ds == 'salami':
+            # load corresponding annotation file
+            path_anno = os.path.join(path_annos, file_id + '.txt')
+            anno = pd.read_csv(path_anno, header=None, sep='\t')
+        elif input_ds == 'jsd':
+            path_anno = os.path.join(path_annos, file_id + '.csv')
+            anno = pd.read_csv(path_anno, sep=';')
+
     except FileNotFoundError:
         tqdm.tqdm.write('{}: No annotation file available. Skipping.'.format(file_id))
         return 0
@@ -91,6 +96,7 @@ def extract_features(params):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--input', help='name of the input dataset (jsd or salami)')
     parser.add_argument('-s', '--src', help='path to the audio sources')
     parser.add_argument('-d', '--dest', help='path to the output destination',
                         default='data/salami_features')
@@ -124,7 +130,8 @@ if __name__ == '__main__':
     win_size = config['win_size']
     sr = config['fs']
 
-    params = [{'fn_audio': fn_audio,
+    params = [{'input_ds': args.input,
+               'fn_audio': fn_audio,
                'file_id': file_id,
                'win_size': win_size,
                'hop_size': hop_size,
