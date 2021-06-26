@@ -67,16 +67,24 @@ def extract_features(params):
     # init target vector
     targets = np.zeros(f_mel.shape[1])
 
-    # filter out first silence boundary (it's the beginning of the song)
-    if anno[1][0].lower() == 'silence':
-        anno = anno.drop(0)
+    if input_ds == 'salami':
+        # filter out first silence boundary (it's the beginning of the song)
+        if anno[1][0].lower() == 'silence':
+            anno = anno.drop(0)
 
-    if anno[1][anno.index[-1]].lower() == 'end':
-        anno = anno.drop(anno.index[-1])
+        if anno[1][anno.index[-1]].lower() == 'end':
+            anno = anno.drop(anno.index[-1])
 
-    # sometimes the last boundaries are beyond the song duration (mp3 problem?)
-    if np.floor(anno[0][anno.index[-1]] * feature_rate).astype('int') >= targets.shape[0]:
-        anno = anno.drop(anno.index[-1])
+        # sometimes the last boundaries are beyond the song duration (mp3 problem?)
+        if np.floor(anno[0][anno.index[-1]] * feature_rate).astype('int') >= targets.shape[0]:
+            anno = anno.drop(anno.index[-1])
+    elif input_ds == 'jsd':
+        # filter out first silence boundary (it's the beginning of the song)
+        if anno.loc[0, 'label'].lower() == 'silence':
+            anno = anno.drop(0)
+
+        if anno.loc[-1, 'label'].lower() == 'end':
+            anno = anno.drop(anno.index[-1])
 
     # from seconds to frame indices
     target_idcs = np.floor(anno[0].values * feature_rate).astype('int')
