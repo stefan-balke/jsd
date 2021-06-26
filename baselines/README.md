@@ -62,7 +62,7 @@ Run these commands and you will be able to reproduce the paper's numbers.
 
 * S, short: `python dnn_testing.py --path_data ../data/ --path_results results/20201230-212634-cnn_ismir2014_salami_short/ --bagging 5 --eval_only`
 * S, long: `python dnn_testing.py --path_data ../data/ --path_results results/20210101-142319-cnn_ismir2014_salami_long/ --bagging 5 --eval_only`
-* J, short: `python dnn_testing.py --path_data ../data/ --path_results results/20210101-195946-cnn_ismir2014_jsd_short --bagging 5 --eval_only`
+* J, short: `python dnn_testing.py --path_data ../data/ --path_results results/20210502-084336-cnn_ismir2014_jsd_short --bagging 5 --eval_only`
 * J, long: `python dnn_testing.py --path_data ../data/ --path_results results/20210102-144947-cnn_ismir2014_jsd_long --bagging 5 --eval_only`
 * S+J, short: `python dnn_testing.py --path_data ../data/ --path_results results/20210102-192725-cnn_ismir2014_salami-jsd_short --bagging 5 --eval_only`
 * S+J, long: `python dnn_testing.py --path_data ../data/ --path_results results/20210103-140930-cnn_ismir2014_salami-jsd_long --bagging 5 --eval_only`
