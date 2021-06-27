@@ -121,6 +121,7 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold):
         try:
             cur_boundaries_est = np.delete(cur_boundaries, cur_est_boundaries_exclude_idcs)
         except IndexError:
+            print('Problem with boundary exclusion on track {}'.format(songs[cur_song_id]))
             cur_boundaries_est = cur_boundaries
 
         # debugging visualization
