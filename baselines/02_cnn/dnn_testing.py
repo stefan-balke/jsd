@@ -117,10 +117,14 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold):
             cur_est_boundaries_exclude = []
 
         est_boundaries_exclude.append(cur_est_boundaries_exclude)
-        cur_boundaries_est = np.delete(cur_boundaries, cur_est_boundaries_exclude_idcs)
+
+        try:
+            cur_boundaries_est = np.delete(cur_boundaries, cur_est_boundaries_exclude_idcs)
+        except IndexError:
+            cur_boundaries_est = cur_boundaries
 
         # debugging visualization
-        debug = True
+        debug = False
         if debug:
             import matplotlib.pyplot as plt
             scaler = feature_rate
