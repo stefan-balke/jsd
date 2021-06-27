@@ -7,4 +7,4 @@ class_balance: 0.2
 input_shape: [116, 80, 1]
 input_data: ['cnn_jsd_features', 'cnn_salami_features', ]
 target_data: ['cnn_jsd_targets', 'cnn_salami_targets', ]
-split_data: ['../../splits/jsd_fold-0.yml', 'data/salami_split.yml']
+split_data: ['../../splits/jsd_fold-0.yml', '../data/salami_split.yml']

@@ -7,4 +7,4 @@ class_balance: 0.2
 input_shape: [116, 80, 1]
 input_data: ['salami_features', ]
 target_data: ['salami_targets', ]
-split_data: ['data/salami_split.yml']
+split_data: ['../data/salami_split.yml']
