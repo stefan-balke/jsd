@@ -232,8 +232,8 @@ if __name__ == '__main__':
     for cur_bag_idx in range(args.bagging):
         path_model = os.path.join(args.path_results, 'architecture-{}.json'.format(cur_bag_idx))
         path_weights = os.path.join(args.path_results, 'weights-{}.h5'.format(cur_bag_idx))
-        path_pred = os.path.join(args.path_results[0], 'pred-test_{}_mb-{}_bag-{}.npz'.format(
-            os.path.splitext(os.path.split(args.test_splits)[1])[0],
+        path_pred = os.path.join(args.path_results, 'pred-test_{}_mb-{}_bag-{}.npz'.format(
+            os.path.splitext(os.path.split(args.test_splits[0])[1])[0],
             args.musical_only,
             cur_bag_idx))
         data = dict()
