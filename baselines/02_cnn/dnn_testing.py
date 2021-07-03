@@ -239,7 +239,7 @@ if __name__ == '__main__':
         else:
             predictions, gts, songs = predict(pathes_test_X, pathes_test_y,
                                               path_model, path_weights, config=config)
-            np.savez_compressed(path_pred, predictions=predictions, gts=gts, songs=songs)
+            # np.savez_compressed(path_pred, predictions=predictions, gts=gts, songs=songs)
             data['predictions'] = predictions
             data['gts'] = gts
             data['songs'] = songs
