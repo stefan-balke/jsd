@@ -166,8 +166,8 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DNN Testing')
-    parser.add_argument('--path_features', type=str, default='../data/cnn_salami_features')
-    parser.add_argument('--path_targets', type=str, default='../data/cnn_salami_targets')
+    parser.add_argument('--path_features', type=str, nargs='*', default=['../data/cnn_salami_features', ])
+    parser.add_argument('--path_targets', type=str, nargs='*', default=['../data/cnn_salami_targets', ])
     parser.add_argument('--path_results', type=str)
     parser.add_argument('--test_splits', type=str, nargs='*', default=['../data/salami_split.yml', ], help='Path to test splits (can be more than one).')
     parser.add_argument('--eval_only', action='store_true', default=False, help='Use pre-computed novelty curves for evaluation.')
