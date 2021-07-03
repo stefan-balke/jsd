@@ -166,7 +166,8 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DNN Testing')
-    parser.add_argument('--path_data', type=str, default='../data')
+    parser.add_argument('--path_features', type=str, default='../data/cnn_salami_features')
+    parser.add_argument('--path_targets', type=str, default='../data/cnn_salami_targets')
     parser.add_argument('--path_results', type=str)
     parser.add_argument('--test_splits', type=str, nargs='*', default=['../data/salami_split.yml', ], help='Path to test splits (can be more than one).')
     parser.add_argument('--eval_only', action='store_true', default=False, help='Use pre-computed novelty curves for evaluation.')
@@ -178,8 +179,8 @@ if __name__ == '__main__':
     config = utils.load_config(os.path.join(args.path_results, 'config.yml'))
 
     # collect pathes
-    PATH_X = [os.path.join(args.path_data, cur_path) for cur_path in config['input_data']]
-    PATH_y = [os.path.join(args.path_data, cur_path) for cur_path in config['target_data']]
+    PATH_X = args.path_features
+    PATH_y = args.path_targets
 
     # collect split data
     splits = []
