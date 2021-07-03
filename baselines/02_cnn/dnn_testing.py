@@ -80,7 +80,10 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
             try:
                 assert len(cur_boundaries_ref) > 0
             except AssertionError:
-                print('Skipping Track {}: No musical boundaries.'.format(songs[cur_song_id]))
+                print('Detected track with no musical boundaries: {}. Setting P, R, and F to 0.'.format(songs[cur_song_id]))
+                Fs.append(0)
+                Rs.append(0)
+                Ps.append(0)
                 continue
 
             # get the non-musical boundaries only
