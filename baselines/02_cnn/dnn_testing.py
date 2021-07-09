@@ -110,12 +110,13 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
         cur_track = gts[gts['track_name'] == songs[cur_song_id]]
 
         # Compute the peaks of the NCs
-        cur_boundaries = utils.detect_peaks(cur_nc, fps=feature_rate, threshold=threshold)
+        # cur_boundaries = utils.detect_peaks(cur_nc, fps=feature_rate, threshold=threshold)
         # prominence = 0.01
-        # from scipy import signal
-        # cur_boundaries = signal.find_peaks(cur_nc, height=0, prominence=prominence)[0]
-        # cur_boundaries = np.asarray(cur_boundaries)
-        # cur_boundaries = np.sort(cur_boundaries)
+        from scipy import signal
+        cur_boundaries = signal.find_peaks(cur_nc, height=0, prominence=prominence)[0]
+        cur_boundaries = np.asarray(cur_boundaries)
+        cur_boundaries = np.sort(cur_boundaries)
+        cur_boundaries = cur_boundaries / feature_rate
 
         if musical_only:
             # get reference boundaries for the current song
