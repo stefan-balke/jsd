@@ -22,6 +22,46 @@ sys.path.append(os.path.join('..'))
 import salami_utils
 
 
+def filter_boundary_estimates(boundaries_est, boundaries_ref, boundaries_ref_nm, bndry_window=3.0):
+    # import info for the evaluation region
+    time_first_musical_boundary = np.min(boundaries_ref)
+    time_last_musical_boundary = np.max(boundaries_ref)
+
+    # keep boundaries for visualization
+    est_boundaries_exclude = []
+
+    # filter out boundary candidates around non-musical boundaries
+    cur_est_boundaries_exclude_idcs = []
+
+    for cur_boundary_nm in boundaries_ref_nm:
+        # check if estimate is in near nm-boundary
+        cur_excludes = np.abs(boundaries_est - cur_boundary_nm)
+        cur_excludes = np.where(cur_excludes <= bndry_window)
+        cur_excludes = cur_excludes[0].tolist()
+
+        cur_est_boundaries_exclude_idcs.extend(cur_excludes)
+
+    # add boundaries outside evaluation window [t_first - window, t_last + window]
+    cur_est_boundaries_exclude_idcs.extend(np.where(boundaries_est < (time_first_musical_boundary - bndry_window))[0].tolist())
+    cur_est_boundaries_exclude_idcs.extend(np.where(boundaries_est > (time_last_musical_boundary + bndry_window))[0].tolist())
+
+    cur_est_boundaries_exclude_idcs = np.asarray(cur_est_boundaries_exclude_idcs)
+    cur_est_boundaries_exclude_idcs = np.unique(cur_est_boundaries_exclude_idcs)
+
+    if cur_est_boundaries_exclude_idcs.shape[0] > 1:
+        cur_est_boundaries_exclude = boundaries_est[cur_est_boundaries_exclude_idcs]
+    else:
+        cur_est_boundaries_exclude = []
+
+    est_boundaries_exclude.append(cur_est_boundaries_exclude)
+
+    try:
+        return np.delete(boundaries_est, cur_est_boundaries_exclude_idcs), cur_est_boundaries_exclude
+    except IndexError:
+        print('Problem with boundary exclusion.')
+        return boundaries_est, cur_est_boundaries_exclude
+
+
 def predict(pathes_X, pathes_y, path_model, path_weights, config):
 
     # Model reconstruction from JSON file
@@ -81,6 +121,9 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
             # get reference boundaries for the current song
             # (not restricted to JSD...only calling a helper function)
             cur_boundaries_ref = jsd_utils.get_boundaries(cur_track, musical_only=True)
+            # get the non-musical boundaries only
+            cur_boundaries_ref_nm = jsd_utils.get_boundaries(cur_track, musical_only=False)
+            cur_boundaries_ref_nm = np.setdiff1d(cur_boundaries_ref_nm, cur_boundaries_ref)
 
             try:
                 assert len(cur_boundaries_ref) > 0
@@ -91,53 +134,14 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
                 Ps.append(0)
                 continue
 
-            # get the non-musical boundaries only
-            cur_boundaries_ref_nm = jsd_utils.get_boundaries(cur_track, musical_only=False)
-            cur_boundaries_ref_nm = np.setdiff1d(cur_boundaries_ref_nm, cur_boundaries_ref)
-
-            # import info for the evaluation region
-            time_first_musical_boundary = np.min(cur_boundaries_ref)
-            time_last_musical_boundary = np.max(cur_boundaries_ref)
-
-            # keep boundaries for visualization
-            est_boundaries_exclude = []
-
-            # filter out boundary candidates around non-musical boundaries
-            bndry_window = 3.0  # in seconds
-            cur_est_boundaries_exclude_idcs = []
-
-            for cur_boundary_nm in cur_boundaries_ref_nm:
-                # check if estimate is in near nm-boundary
-                cur_excludes = np.abs(cur_boundaries - cur_boundary_nm)
-                cur_excludes = np.where(cur_excludes <= window)
-                cur_excludes = cur_excludes[0].tolist()
-
-                cur_est_boundaries_exclude_idcs.extend(cur_excludes)
-
-            # add boundaries outside evaluation window [t_first - window, t_last + window]
-            cur_est_boundaries_exclude_idcs.extend(np.where(cur_boundaries < (time_first_musical_boundary - bndry_window))[0].tolist())
-            cur_est_boundaries_exclude_idcs.extend(np.where(cur_boundaries > (time_last_musical_boundary + bndry_window))[0].tolist())
-
-            cur_est_boundaries_exclude_idcs = np.asarray(cur_est_boundaries_exclude_idcs)
-            cur_est_boundaries_exclude_idcs = np.unique(cur_est_boundaries_exclude_idcs)
-
-            if cur_est_boundaries_exclude_idcs.shape[0] > 1:
-                cur_est_boundaries_exclude = cur_boundaries[cur_est_boundaries_exclude_idcs]
-            else:
-                cur_est_boundaries_exclude = []
-
-            est_boundaries_exclude.append(cur_est_boundaries_exclude)
-
-            try:
-                cur_boundaries_est = np.delete(cur_boundaries, cur_est_boundaries_exclude_idcs)
-            except IndexError:
-                print('Problem with boundary exclusion on track {}'.format(songs[cur_song_id]))
-                cur_boundaries_est = cur_boundaries
+            # filter boundary estimates
+            cur_boundaries_est, cur_est_boundaries_exclude = filter_boundary_estimates(cur_boundaries, cur_boundaries_ref, cur_boundaries_ref_nm, bndry_window=3.0)
 
             # debugging visualization
-            debug = True
+            debug = False
             if debug:
                 import matplotlib.pyplot as plt
+                os.makedirs('debug_plots', exist_ok=True)
                 scaler = feature_rate
                 fig, ax = plt.subplots(nrows=1, figsize=(20, 4))
                 fig.suptitle('{}, Threshold: {:.2f}'.format(cur_song, threshold))
@@ -156,7 +160,6 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
                 ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
                 plt.savefig('debug_plots/{}.png'.format(cur_song))
-                # plt.show()
                 plt.close()
         else:
             # consider all boundaries
