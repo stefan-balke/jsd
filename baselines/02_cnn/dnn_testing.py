@@ -70,13 +70,12 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
         cur_track = gts[gts['track_name'] == songs[cur_song_id]]
 
         # Compute the peaks of the NCs
-        # cur_boundaries = utils.detect_peaks(cur_nc, fps=feature_rate, threshold=threshold)
-        # cur_boundaries = utils.detect_peaks(cur_nc, fps=feature_rate, threshold=threshold)
-        prominence = 0.1
-        from scipy import signal
-        cur_boundaries = signal.find_peaks(cur_nc, height=threshold, prominence=prominence)[0]
-        cur_boundaries = np.asarray(cur_boundaries)
-        cur_boundaries = np.sort(cur_boundaries)
+        cur_boundaries = utils.detect_peaks(cur_nc, fps=feature_rate, threshold=threshold)
+        # prominence = 0.01
+        # from scipy import signal
+        # cur_boundaries = signal.find_peaks(cur_nc, height=0, prominence=prominence)[0]
+        # cur_boundaries = np.asarray(cur_boundaries)
+        # cur_boundaries = np.sort(cur_boundaries)
 
         if musical_only:
             # get reference boundaries for the current song
@@ -136,11 +135,11 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
                 cur_boundaries_est = cur_boundaries
 
             # debugging visualization
-            debug = False
+            debug = True
             if debug:
                 import matplotlib.pyplot as plt
                 scaler = feature_rate
-                fig, ax = plt.subplots(nrows=1)
+                fig, ax = plt.subplots(nrows=1, figsize=(20, 4))
                 fig.suptitle('{}, Threshold: {:.2f}'.format(cur_song, threshold))
                 ax.plot(cur_nc, label='NC')
                 ax.set_xlim(0, len(cur_nc))
@@ -156,8 +155,11 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
 
                 ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-                plt.show()
+                plt.savefig('debug_plots/{}.png'.format(cur_song))
+                # plt.show()
+                plt.close()
         else:
+            # consider all boundaries
             cur_boundaries_ref = jsd_utils.get_boundaries(cur_track, musical_only=False)
             cur_boundaries_est = cur_boundaries
 
@@ -238,9 +240,8 @@ if __name__ == '__main__':
     for cur_bag_idx in range(args.bagging):
         path_model = os.path.join(args.path_results, 'architecture-{}.json'.format(cur_bag_idx))
         path_weights = os.path.join(args.path_results, 'weights-{}.h5'.format(cur_bag_idx))
-        path_pred = os.path.join(args.path_results, 'pred-test_{}_mb-{}_bag-{}.npz'.format(
+        path_pred = os.path.join(args.path_results, 'pred-test_{}_bag-{}.npz'.format(
             os.path.splitext(os.path.split(args.test_splits[0])[1])[0],
-            args.musical_only,
             cur_bag_idx))
         data = dict()
 
