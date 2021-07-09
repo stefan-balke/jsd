@@ -45,7 +45,9 @@ def load_jsd(path_annotation_files):
     annotations['segment_class_id'] = np.nan
     annotations['segment_chorus_id'] = np.nan
     annotations['instrument_solo'] = ''
+    annotations['n_instruments_solo'] = np.nan
     annotations['instrument_acc'] = ''
+    annotations['n_instruments_acc'] = np.nan
     annotations['mixed_solo'] = np.nan
 
     # Parse annotations and expand metadata
@@ -101,7 +103,9 @@ def load_jsd(path_annotation_files):
                     instr_acc.append(cur_instr_str)
 
             annotations.at[cur_index, 'instrument_solo'] = ','.join(instr_solo)
+            annotations.at[cur_index, 'n_instruments_solo'] = len(instr_solo)
             annotations.at[cur_index, 'instrument_acc'] = ','.join(instr_acc)
+            annotations.at[cur_index, 'n_instruments_acc'] = len(instr_acc)
 
             # is it a mixed solo, e.g., trading 4s...
             if len(instr_solo) == 1:
