@@ -127,6 +127,7 @@ if __name__ == '__main__':
     # create results folders
     path_network = '{}-{}'.format(datetime.datetime.now().strftime('%Y%m%d-%H%M%S'), args.net)
     path_results = os.path.join(args.path_results, path_network)
+    path_results = '{}_{}'.format(path_results, os.path.splitext(os.path.basename(args.config))[0])
     os.makedirs(path_results, exist_ok=True)
 
     # copy config file

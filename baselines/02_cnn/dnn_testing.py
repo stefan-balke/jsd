@@ -14,6 +14,7 @@ import mir_eval
 import pescador
 import yaml
 import glob
+from scipy import signal
 
 # hacky relative import
 sys.path.append(os.path.join('..', '..'))
@@ -56,9 +57,12 @@ def filter_boundary_estimates(boundaries_est, boundaries_ref, boundaries_ref_nm,
     est_boundaries_exclude.append(cur_est_boundaries_exclude)
 
     try:
-        return np.delete(boundaries_est, cur_est_boundaries_exclude_idcs), cur_est_boundaries_exclude
+        if len(cur_est_boundaries_exclude_idcs) > 0:
+            return np.delete(boundaries_est, cur_est_boundaries_exclude_idcs), cur_est_boundaries_exclude
+        else:
+            return boundaries_est, cur_est_boundaries_exclude
     except IndexError:
-        print('Problem with boundary exclusion.')
+        print('Problem with boundary exclusion. Returning original. #Boundaries: {}, #To delete: {}'.format(len(boundaries_est), len(cur_est_boundaries_exclude_idcs)))
         return boundaries_est, cur_est_boundaries_exclude
 
 
@@ -91,6 +95,7 @@ def predict(pathes_X, pathes_y, path_model, path_weights, config):
             cur_predictions.extend(model.predict_on_batch(cur_batch['X']).squeeze())
             cur_gts.extend(cur_batch['y'].squeeze())
 
+        # import matplotlib.pyplot as plt; plt.plot(cur_predictions);plt.show()
         predictions.append(cur_predictions)
         gts.append(cur_gts)
         songs.append(cur_song)
@@ -110,13 +115,13 @@ def evaluate(songs, predictions, gts, window, feature_rate, threshold, musical_o
         cur_track = gts[gts['track_name'] == songs[cur_song_id]]
 
         # Compute the peaks of the NCs
-        # cur_boundaries = utils.detect_peaks(cur_nc, fps=feature_rate, threshold=threshold)
-        # prominence = 0.01
-        from scipy import signal
-        cur_boundaries = signal.find_peaks(cur_nc, height=0, prominence=prominence)[0]
+        cur_boundaries = utils.detect_peaks(cur_nc, fps=feature_rate, threshold=threshold)
+        # prominence = 0.2
+        # cur_boundaries = signal.find_peaks(cur_nc, height=threshold, prominence=prominence)[0]
+
         cur_boundaries = np.asarray(cur_boundaries)
         cur_boundaries = np.sort(cur_boundaries)
-        cur_boundaries = cur_boundaries / feature_rate
+        # cur_boundaries = cur_boundaries / feature_rate
 
         if musical_only:
             # get reference boundaries for the current song
@@ -250,6 +255,7 @@ if __name__ == '__main__':
         data = dict()
 
         if args.eval_only:
+            print('Loading predictions from {}...'.format(path_pred))
             saved_data = np.load(path_pred, allow_pickle=True)
             data['predictions'] = saved_data['predictions']
             data['gts'] = saved_data['gts']
@@ -272,6 +278,8 @@ if __name__ == '__main__':
     # model bagging
     predictions = []
     songs = bags[0]['songs']
+
+    debug = False
 
     # collect data for model bagging
     if args.bagging > 1:

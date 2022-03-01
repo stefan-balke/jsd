@@ -125,10 +125,10 @@ if __name__ == '__main__':
 
     for cur_threshold in tqdm.tqdm(thresholds):
         # Evaluate with 0.5 s tolerance
-        cur_F_05, _, _ = evaluate(songs, predictions, annotations, window=0.5, feature_rate=feature_rate, threshold=cur_threshold)
+        cur_F_05, _, _ = evaluate(songs, predictions, annotations, window=0.5, feature_rate=feature_rate, threshold=cur_threshold, musical_only=False)
 
         # Evaluate with 3.0 s tolerance
-        cur_F_3, _, _ = evaluate(songs, predictions, annotations, window=3.0, feature_rate=feature_rate, threshold=cur_threshold)
+        cur_F_3, _, _ = evaluate(songs, predictions, annotations, window=3.0, feature_rate=feature_rate, threshold=cur_threshold, musical_only=False)
 
         if cur_F_05 > F_05_max:
             thresh_05 = cur_threshold
