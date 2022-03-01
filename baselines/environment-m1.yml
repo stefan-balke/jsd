@@ -1,0 +1,25 @@
+name: jsd_baselines
+
+channels:
+    - defaults
+    - conda-forge
+    - apple
+
+dependencies:
+    - python=3.9
+    - numpy
+    - scikit-learn
+    - librosa
+    - pandas
+    - pescador=2.0.0
+    - pyyaml
+    # - cudatoolkit=10.0.130=0
+    # - cudnn=7.3.1=cuda10.0_0
+    - pytest
+    - tensorflow-deps
+    - pip
+    - pip:
+        - tensorflow-macos
+        - tensorflow-metal
+        - mir-eval==0.5
+        - tqdm==4.32.2
