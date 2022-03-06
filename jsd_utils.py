@@ -36,9 +36,9 @@ def load_jsd(path_annotation_files):
         cur_csv = pd.read_csv(cur_path_anno, usecols=[0, 1, 2, 3], sep=';')
         cur_csv['track_name'] = track_name
 
-        cur_csv = flag_non_musical_segments(cur_csv)
+        cur_csv = flag_non_musical_boundaries(cur_csv)
 
-        annotations = annotations.append(cur_csv)
+        annotations = pd.concat([annotations, cur_csv])
 
     annotations = annotations.reset_index(drop=True)
     annotations['segment_class'] = ''
@@ -138,7 +138,7 @@ def filter_db_by_solo(track_db):
         solos_merge = solos_first
         solos_merge['segment_end'] = solos_last['segment_end']
 
-        track_db_solos = track_db_solos.append(solos_merge, ignore_index=True)
+        track_db_solos = pd.concat([track_db_solos, solos_merge], ignore_index=True)
 
     # update durations
     track_db_solos['segment_dur'] = track_db_solos['segment_end'] - track_db_solos['segment_start']
@@ -172,14 +172,19 @@ def get_boundaries(track_data, musical_only=False):
     cur_track_data = track_data.copy()
 
     if musical_only:
-        cur_track_data = cur_track_data[cur_track_data['is_musical'] == True]
+        cur_track_data = cur_track_data[cur_track_data['start_bndry_is_musical'] == True]
 
-    boundaries = np.unique(list(cur_track_data['segment_start'].values))
+    # We take the start values of each boundary...
+    boundaries = list(cur_track_data['segment_start'].values)
+
+    if not musical_only:
+        # ... and add the last segment's end value
+        boundaries.append(cur_track_data['segment_end'].values[-1])
 
     return np.sort(boundaries)
 
 
-def flag_non_musical_segments(track_data):
+def flag_non_musical_boundaries(track_data):
     """Filter segments to musical boundaries, i.e. containing no silence boundaries
         and only boundaries which are surrounded by musical parts.
 
@@ -195,7 +200,7 @@ def flag_non_musical_segments(track_data):
     """
     cur_track_data = track_data.copy()
 
-    cur_track_data['is_musical'] = True
+    cur_track_data['start_bndry_is_musical'] = True
     # drop_idcs = cur_track_data[cur_track_data['label'] == 'silence'].index.tolist()
     # drop_idcs.extend(cur_track_data[cur_track_data['label'] == 'end'].index.tolist())
     # first and last bounardy are always non-musical
@@ -216,6 +221,6 @@ def flag_non_musical_segments(track_data):
         if (prev_segment == 'z') or (next_segment == 'z'):
             non_musical_idcs.append(curr_segment['index'])
 
-    cur_track_data.loc[cur_track_data.index.isin(non_musical_idcs), 'is_musical'] = 'False'
+    cur_track_data.loc[cur_track_data.index.isin(non_musical_idcs), 'start_bndry_is_musical'] = 'False'
 
     return cur_track_data

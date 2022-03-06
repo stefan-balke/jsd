@@ -393,21 +393,23 @@ if __name__ == '__main__':
 
     jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
     nr_tracks = len(jsd_track_db['track_name'].unique())
+    n_musical = []
+    n_total = []
+
+    for cur_track_name in jsd_track_db['track_name'].unique():
+        cur_jsd_track = jsd_track_db[jsd_track_db['track_name'] == cur_track_name]
+        n_musical.append(jsd_utils.get_boundaries(cur_jsd_track, musical_only=True).shape[0])
+        n_total.append(jsd_utils.get_boundaries(cur_jsd_track, musical_only=False).shape[0])
+
+    n_total = np.sum(n_total)
+    n_musical = np.sum(n_musical)
+    n_non_musical = n_total - n_musical
+
     print('# of tracks: {}'.format(nr_tracks))
     print('# of segments: {}'.format(jsd_track_db.shape[0]))
-    print('# of musical boundaries: {}'.format(jsd_track_db[jsd_track_db['is_musical'] == True].shape[0]))
-    print('# of non-musical boundaries: {}'.format(jsd_track_db[jsd_track_db['is_musical'] != True].shape[0]))
-
-    # n_musical = []
-    # n_non_musical = []
-    # print(jsd_track_db[jsd_track_db['is_musical'] != True].shape[0])
-    # for cur_track_name in jsd_track_db['track_name'].unique():
-    #     cur_jsd_track = jsd_track_db[jsd_track_db['track_name'] == cur_track_name]
-    #     n_musical.append(cur_jsd_track[cur_jsd_track['is_musical'] == True].shape[0])
-    #     n_non_musical.append(cur_jsd_track[cur_jsd_track['is_musical'] != True].shape[0])
-
-    # print(n_musical)
-    # print(n_non_musical)
+    print('# of boundaries: {}'.format(n_total))
+    print('# of musical boundaries: {}'.format(n_musical))
+    print('# of non-musical boundaries: {}'.format(n_non_musical))
 
     stats_per_segment_class(jsd_track_db, PATH_OUTPUT)
     stats_per_instrument(jsd_track_db, PATH_OUTPUT)

@@ -1,21 +1,18 @@
 # Jazz Structure Dataset
 
-* Authors: Stefan Balke, Julian Reck, and Meinard Müller
-* Special thanks to Moritz Berendes as the main annotator!
+* Authors: Stefan Balke, Julian Reck, Christof Weiß, Jakob Abesser, and Meinard Müller
 
 # Abstract
 
-The Jazz Structure Dataset (JSD) comprises structure annotations for 343
+The Jazz Structure Dataset (JSD) comprises structure annotations for 340
 famous Jazz recordings. Along with the temporal annotations for song
 regions (e.g., Solo 1 starting at 40 s and ending at 113 s), it provides
 further metadata about the predominant instrument (in most cases the soloist)
 and the accompanying instruments (e.g., drums and piano).
 
+This repository contains the reference implementations for the baselines described in the paper.
+
 # Technical Description
-
-## Annotation Process
-
-* TODO: Add short explanation of annotation process
 
 ## Installation
 
