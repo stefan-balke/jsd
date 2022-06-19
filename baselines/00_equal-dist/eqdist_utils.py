@@ -1,5 +1,11 @@
 import numpy as np
 import pandas as pd
+import sys
+import os
+
+# hacky relative import
+sys.path.append(os.path.join('..', '..'))
+import jsd_utils
 
 
 def get_baseline_segments(track_dur, n_segments, silence_start, silence_end):
@@ -49,5 +55,6 @@ def get_baseline_segments(track_dur, n_segments, silence_start, silence_end):
                        'label': 'silence'})
 
     boundaries = pd.DataFrame(boundaries)
+    boundaries = jsd_utils.flag_non_musical_boundaries(boundaries)
 
     return boundaries

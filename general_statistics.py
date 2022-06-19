@@ -2,16 +2,17 @@
     This script plots various statistics of the annotations from the dataset.
 """
 
+from bdb import set_trace
 import os
 import glob
+import pdb
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
 import seaborn as sns
 import pandas as pd
 import jsd_utils
 sns.set(style='white')
-sns.set_context('paper', font_scale=1.6, rc={'lines.linewidth': 0.75})
+sns.set_context('paper', font_scale=2.5, rc={'lines.linewidth': 0.75})
 sns.set_color_codes('muted')
 
 
@@ -53,6 +54,46 @@ def plot_hist_segments_per_track(track_db, path_output, count_threshold=20):
     sns.despine()
     plt.tight_layout()
     plt.savefig(os.path.join(path_output, 'hist_segments_per_track.pdf'), bbox_inches='tight')
+
+
+def plot_hist_segments_duration(track_db, path_output, dur_threshold=100):
+    """Histogram over number of all segments per track
+
+    Parameters
+    ----------
+        track_db : pd.DataFrame
+            Pandas DataFrame storing all the annotations.
+        path_output : str
+            Figure saving path.
+        dur_threshold : int
+            Larger counts will be treated as `other`
+    """
+
+    # consider all but silence
+    track_db_filtered = track_db.copy(deep=True)
+    track_db_filtered = track_db_filtered[track_db_filtered['segment_class'] != 'silence']
+
+    # pool mixed solos
+    track_db_filtered.loc[track_db_filtered['mixed_solo'] > 0, 'instrument_solo'] = 'mix'
+
+    # data = pd.DataFrame({'mean_segment_dur': track_db_filtered.groupby(['track_name']).mean()['segment_dur']}).reset_index()
+    data_count = track_db_filtered['segment_dur'].values
+    data_count[data_count > dur_threshold] = dur_threshold + 5
+
+    # plotting
+    _, ax = plt.subplots(figsize=(9, 4))
+    sns.distplot(data_count, bins='auto', kde=False, norm_hist=False,
+                 hist_kws={'align': 'right', 'alpha': 1.0})
+    labels = ax.get_xticks().tolist()
+    labels = [int(item) for item in labels]
+    labels[-2] = '>{}'.format(dur_threshold)
+    ax.set_xticklabels(labels)
+    ax.set_xlabel('Duration (Seconds')
+    ax.set_ylabel('#Segments')
+
+    sns.despine()
+    plt.tight_layout()
+    plt.savefig(os.path.join(path_output, 'hist_segments_duration.pdf'), bbox_inches='tight')
 
 
 def plot_hist_choruses_per_track(track_db, path_output, count_threshold=20):
@@ -243,7 +284,7 @@ def plot_hist_solodurtotal_per_instrument(track_db, path_output, dur_threshold=6
     n_bars = len(data)
 
     # plotting
-    _, ax = plt.subplots(figsize=(9, 4))
+    _, ax = plt.subplots(figsize=(9, 6))
     ind = np.arange(n_bars)
     plt.bar(ind, data['segment_dur'] / 60)
     labels = data['instrument_solo'][:n_bars].to_list()
@@ -287,7 +328,7 @@ def plot_boxplot_solodur_per_instrument(track_db, path_output):
     box_order = medians.index.to_list()
 
     # plotting
-    _, ax = plt.subplots(figsize=(9, 4))
+    _, ax = plt.subplots(figsize=(9, 6))
     sns.boxplot(x='instrument_solo', y='segment_dur', data=data, color='b', order=box_order)
     plt.xticks(rotation=60)
     ax.set_xlabel('Solo Instrument')
@@ -410,8 +451,10 @@ if __name__ == '__main__':
     print('# of boundaries: {}'.format(n_total))
     print('# of musical boundaries: {}'.format(n_musical))
     print('# of non-musical boundaries: {}'.format(n_non_musical))
+    print('Total duration of solo sections in minutes: {}'.format(jsd_track_db[jsd_track_db['segment_class'] == 'solo']['segment_dur'].sum() / 60))
 
     stats_per_segment_class(jsd_track_db, PATH_OUTPUT)
+    plot_hist_segments_duration(jsd_track_db, PATH_OUTPUT)
     stats_per_instrument(jsd_track_db, PATH_OUTPUT)
     plot_hist_segments_per_track(jsd_track_db, PATH_OUTPUT)
     plot_hist_choruses_per_track(jsd_track_db, PATH_OUTPUT)

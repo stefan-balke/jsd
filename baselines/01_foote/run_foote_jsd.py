@@ -89,7 +89,7 @@ def main():
 
     for cur_params in best_thresholds:
         print('Best parameter set for window {}'.format(cur_params['window']))
-        print(eval_means[(eval_means['split'] == 'test') & (eval_means['wl_ds'] == cur_params['wl_ds']) & (eval_means['threshold'] == cur_params['threshold'])])
+        print(eval_means[(eval_means['split'] == 'test') & (eval_means['wl_ds'] == cur_params['wl_ds']) & (eval_means['threshold'] == cur_params['threshold'])].round(decimals=3))
 
 
 if __name__ == '__main__':

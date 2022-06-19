@@ -1,6 +1,6 @@
 segment_start;segment_end;label;instrument
-0.0;1.2074376409999998;silence;
-1.2074376409999998;8.080544217;intro;ts,cl,cor,dr
+0.0;1.207437641;silence;
+1.207437641;8.080544217;intro;ts,cl,cor,dr
 8.080544217;63.506575963;theme_01_01;ts,g,dr
 63.506575963;121.254603174;solo_01_01;s_cor,b_g,b_dr
 121.254603174;179.304489795;theme_02_01;cl,cor,g,tb,dr

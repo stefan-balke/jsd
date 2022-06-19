@@ -1,6 +1,13 @@
-# Jazz Structure Dataset
+# Jazz Structure Dataset (JSD)
 
-* Authors: Stefan Balke, Julian Reck, Christof Weiß, Jakob Abesser, and Meinard Müller
+This repository contains the corresponding code for the article:
+>[Stefan Balke](https://stefan.balke.at),
+>Julian Reck,
+>[Christof Weiß](https://www.audiolabs-erlangen.de/fau/assistant/weiss),
+>[Jakob Abeßer](https://www.idmt.fraunhofer.de/en/institute/doctorands/abesser.html),
+> and [Meinard Müller](https://www.audiolabs-erlangen.de/fau/professor/mueller):<br>
+[JSD: A Dataset for Structure Analysis in Jazz Music](#),<br>
+*Transactions of the International Society for Music Information Retrieval*, 2022.
 
 # Abstract
 
@@ -10,7 +17,7 @@ regions (e.g., Solo 1 starting at 40 s and ending at 113 s), it provides
 further metadata about the predominant instrument (in most cases the soloist)
 and the accompanying instruments (e.g., drums and piano).
 
-This repository contains the reference implementations for the baselines described in the paper.
+This repository contains the annotations and reference implementations for the baselines described in the paper.
 
 # Technical Description
 
@@ -37,6 +44,8 @@ This script takes the files from `data/annotations_raw` and applies the followin
  * Unify notation into a region-like notation with start and end time points.
  * Fix small holes in the annotations (e.g., annotation starts 0.001 s after previous annotation ends).
 
+The usage of the baselines is explained in a separate Readme in the `baselines` folder.
+
 ## Tools
 
 * `python general_statistics`
@@ -49,3 +58,6 @@ This script takes the files from `data/annotations_raw` and applies the followin
   - PatMetheny_MidnightVoyage_Orig == MichaelBrecker_MidnightVoyage_Orig
   - PatMetheny_NothingPersonal_Orig == MichaelBrecker_NothingPersonal_Orig
   --> we only keep the original files (in these cases Michael Brecker)
+* CannonballAdderley_ThisHere_Orig has applause and an intro speech at the beginning an applause at the end which is not annotated as a separate section
+* If you use the dataset in your work, please cite the above mentioned paper.
+* In case you have questions, please feel free to reach out in an issue or by mail!

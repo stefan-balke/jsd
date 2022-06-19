@@ -87,20 +87,20 @@ Run these commands and you will be able to reproduce the paper's numbers.
 #### JSD
 
 * S, short: `python dnn_testing.py --path_features ../data/cnn_jsd_features --path_targets ../data/cnn_jsd_targets --path_results results/20220208-231539-cnn_ismir2014_config_salami_short/ --bagging 5 --test_splits ../../splits/jsd_fold-0.yml --musical_only`
-    - 0.5 s window: P=0.165, R=0.214, F=0.175
-    - 3.0 s window: P=0.309, R=0.612, F=0.393
+    - 0.5 s window: P=0.172, R=0.222, F=0.183
+    - 3.0 s window: P=0.316, R=0.613, F=0.398
 * S, long: `python dnn_testing.py --path_features ../data/cnn_jsd_features --path_targets ../data/cnn_jsd_targets --path_results results/20220209-124533-cnn_ismir2014_config_salami_long/ --bagging 5 --test_splits ../../splits/jsd_fold-0.yml --musical_only`
     - 0.5 s window: P=0.132, R=0.126, F=0.120
-    - 3.0 s window: P=0.423, R=0.566, F=0.462
+    - 3.0 s window: P=0.442, R=0.579, F=0.477
 * J, short: `python dnn_testing.py --path_features ../data/cnn_jsd_features --path_targets ../data/cnn_jsd_targets --path_results results/20220209-175302-cnn_ismir2014_config_jsd_short/ --bagging 5 --test_splits ../../splits/jsd_fold-0.yml --musical_only`
-    - 0.5 s window: P=0.271, R=0.124, F=0.161
-    - 3.0 s window: P=0.467, R=0.550, F=0.464
+    - 0.5 s window: P=0.279, R=0.125, F=0.162
+    - 3.0 s window: P=0.467, R=0.543, F=0.460
 * J, long: `python dnn_testing.py --path_features ../data/cnn_jsd_features --path_targets ../data/cnn_jsd_targets --path_results results/20220210-082246-cnn_ismir2014_config_jsd_long/ --bagging 5 --test_splits ../../splits/jsd_fold-0.yml --musical_only`
-    - 0.5 s window: P=0.181, R=0.111, F=0.132
-    - 3.0 s window: P=0.597, R=0.431, F=0.470
+    - 0.5 s window: P=0.196, R=0.114, F=0.136
+    - 3.0 s window: P=0.624, R=0.439, F=0.483
 * S+J, short: `python dnn_testing.py --path_features ../data/cnn_jsd_features --path_targets ../data/cnn_jsd_targets --path_results results/20220210-130320-cnn_ismir2014_config_salami-jsd_short/ --bagging 5 --test_splits ../../splits/jsd_fold-0.yml --musical_only`
-    - 0.5 s window: P=0.250, R=0.260, F=0.229
-    - 3.0 s window: P=0.412, R=0.514, F=0.424
+    - 0.5 s window: P=0.256, R=0.268, F=0.236
+    - 3.0 s window: P=0.426, R=0.521, F=0.433
 * S+J, long: `python dnn_testing.py --path_features ../data/cnn_jsd_features --path_targets ../data/cnn_jsd_targets --path_results results/20220210-215133-cnn_ismir2014_config_salami-jsd_long/ --bagging 5 --test_splits ../../splits/jsd_fold-0.yml --musical_only`
-    - 0.5 s window: P=0.177, R=0.153, F=0.151
-    - 3.0 s window: P=0.405, R=0.669, F=0.486
+    - 0.5 s window: P=0.185, R=0.159, F=0.158
+    - 3.0 s window: P=0.418, R=0.676, F=0.496

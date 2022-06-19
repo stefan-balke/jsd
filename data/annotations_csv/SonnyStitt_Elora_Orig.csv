@@ -1,8 +1,8 @@
 segment_start;segment_end;label;instrument
 0.0;0.069659863;silence;
 0.069659863;9.961360544;intro;p,b,dr
-9.961360544;49.644263038000005;theme_01_01;ts,tb,p,b,dr
-49.644263038000005;89.46648526;solo_01_01;s_ts,b_p,b_b,b_dr
+9.961360544;49.644263038;theme_01_01;ts,tb,p,b,dr
+49.644263038;89.46648526;solo_01_01;s_ts,b_p,b_b,b_dr
 89.46648526;128.383129251;solo_02_01;s_tb,b_p,b_b,b_dr
 128.383129251;170.016507936;solo_03_01;s_dr,s_ts,s_tb,s_p,b_b
 170.016507936;186.92063492;outro;p,ts,tb,b,dr

@@ -447,7 +447,8 @@ def foote_experiment(track_db, params, thresholds, feature_rate, path_features):
                     cur_est_boundaries_exclude = []
 
                 est_boundaries_exclude.append(cur_est_boundaries_exclude)
-                cur_boundaries_mfcc = np.delete(cur_boundaries_mfcc, cur_est_boundaries_exclude_idcs)
+                if len(cur_est_boundaries_exclude_idcs) > 0:
+                    cur_boundaries_mfcc = np.delete(cur_boundaries_mfcc, cur_est_boundaries_exclude_idcs)
                 boundaries_mfcc_eval.append(cur_boundaries_mfcc)
 
                 cur_eval_row = {}

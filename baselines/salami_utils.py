@@ -26,7 +26,7 @@ def load_salami(track_durs, path_annotations):
         cur_track_data['segment_end'] = cur_track_data['segment_start'].shift(-1)
         cur_track_data['segment_dur'] = cur_track_data['segment_end'] - cur_track_data['segment_start']
         cur_track_data = cur_track_data[:-1]
-        cur_track_data = jsd_utils.flag_non_musical_segments(cur_track_data)
+        cur_track_data = jsd_utils.flag_non_musical_boundaries(cur_track_data)
 
         salami_data.append(cur_track_data)
 

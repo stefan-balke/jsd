@@ -15,7 +15,7 @@ import salami_utils
 
 
 def main():
-    PATH_DATA = os.path.join('..', '02_cnn', 'data')
+    PATH_DATA = os.path.join('..', 'data')
     path_annotations = os.path.join(PATH_DATA, 'salami_annotations')
     track_durs = pd.read_csv(os.path.join(PATH_DATA, 'salami_track_durations.csv'))
     track_durs = track_durs.astype(str)
@@ -48,7 +48,7 @@ def main():
                                                                 cur_track_data.shape[0],
                                                                 silence_start_median,
                                                                 silence_end_median)
-            # print(baseline_track)
+
             cur_boundaries_ref = jsd_utils.get_boundaries(cur_track_data, musical_only=True)
             cur_boundaries_est = jsd_utils.get_boundaries(baseline_track, musical_only=True)
 

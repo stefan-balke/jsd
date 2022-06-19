@@ -14,7 +14,7 @@ def add_silence(annotation, track_dur, track_name):
                       + annotation['segment_dur'].values[len(annotation) - 1]
     end_silence = pd.DataFrame([[end_last_region, track_dur - end_last_region, 'silence']],
                                columns=annotation.columns.values)
-    end_silence = end_silence.set_index(end_silence.index  + len(annotation) + 1)
+    end_silence = end_silence.set_index(end_silence.index + len(annotation) + 1)
 
     # add a silence segment from the start of the file to the start of the first segment
     annotation = annotation.set_index(annotation.index + 1)
@@ -28,8 +28,8 @@ def add_silence(annotation, track_dur, track_name):
                          columns=annotation.columns.values)
 
     # add both segments to the annotation file, indexes are set for correct segment position
-    annotation = annotation.append(start)
-    annotation = annotation.append(end_silence)
+    annotation = pd.concat([annotation, start])
+    annotation = pd.concat([annotation, end_silence])
     annotation = annotation.sort_index()
 
     return annotation
@@ -66,7 +66,7 @@ def convert_to_regions(annotation, track_name, gap_threshold=1.0):
         row = pd.DataFrame([[cur_start, cur_end_adj, label, instruments]],
                            columns=out_df.columns.values)
 
-        out_df = out_df.append(row)
+        out_df = pd.concat([out_df, row])
 
     return out_df
 
