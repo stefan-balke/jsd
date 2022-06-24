@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+<link rel="stylesheet" href="../assets/css/player.min.css" />
+{% endblock %}
+
+{% block content %}
+
+<div class='player onlyradiosolo repeat'>
+    <img class="seekable" data-style="width: 80%; margin: 10px auto;" data-seek-margin-left="1" data-seek-margin-right="1" src="{{ path_ssms[0] }}" />
+    {% for cur_path_ssm in path_ssms %}
+    <track-wrap title="{{ title_ssms[loop.index - 1] }}" data-img="{{ cur_path_ssm }}">
+        <source src="{{ path_track }}">
+    </track-wrap>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block js_assets %}
+{{ super() }}
+
+<script src="../assets/js/player.min.js"></script>
+
+<script type="text/javascript">
+    jQuery(document).ready(function() {
+        jQuery(".player.onlyradiosolo.repeat").multitrackAudioPlayer({onlyradiosolo: true, repeat: true});
+    });
+</script>
+{% endblock %}

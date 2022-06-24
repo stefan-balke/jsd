@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% block head %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Weimar Jazz Database - {% block title %}{% endblock %}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="../assets/css/web_motif.css" rel="stylesheet">
+    {% endblock %}
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-toggleable-md navbar-inverse fixed-top bg-inverse">
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <a class="navbar-brand" href="#">WJD Structure</a>
+
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html">Overview</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+        <h1 class="display-3">{{ self.title() }}</h1>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+          {% block content %}
+          {% endblock %}
+      </div>
+      <hr>
+
+      <footer>
+        <p>&copy; International Audio Laboratories Erlangen, 2017</p>
+      </footer>
+    </div> <!-- /container -->
+
+
+    {% block js_assets %}
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="../assets/js/jquery-3.1.1.min.js"></script>
+    <script src="../assets/js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../assets/js/ie10-viewport-bug-workaround.js"></script>
+    {% endblock %}
+  </body>
+</html>

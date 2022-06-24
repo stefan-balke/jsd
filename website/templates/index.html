@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<table style="width:50%">
+  <tr>
+    <th>Songname</th>
+    <th>Link</th>
+  </tr>
+{% for cur_name, cur_link in pages %}
+<tr>
+  <td>{{ cur_name }}</td>
+  <td><a href="{{ cur_link }}">Link</a></td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}
