@@ -12,6 +12,7 @@ import scipy
 import scipy.misc
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import numpy as np
+from PIL import Image
 
 
 def colorbar_ct():
@@ -56,25 +57,26 @@ def solo_colormap(instrument, solo_nr):
     return color
 
 
-def plot_annotations(cur_annotation, path_instrument_images, axes=None):
+def plot_annotations(df_annotation, path_instrument_images, axes=None):
     # loop over rows in pandas DataFrame and add rectangles
     # solos start at color 5
 
     #  SPAGETHI CODE DO NOT TOUCH !!!
-    cur_annotation = cur_annotation.replace(to_replace='s_ts1', value='s_ts', regex=True)
-    cur_annotation = cur_annotation.replace(to_replace='s_ts2', value='s_ts', regex=True)
-    cur_annotation = cur_annotation.replace(to_replace='s_tp1', value='s_tp', regex=True)
-    cur_annotation = cur_annotation.replace(to_replace='s_tp2', value='s_tp', regex=True)
-    cur_annotation = cur_annotation.replace(to_replace='s_as1', value='s_as', regex=True)
-    cur_annotation = cur_annotation.replace(to_replace='s_as2', value='s_as', regex=True)
+    df_annotation = df_annotation.replace(to_replace='s_ts1', value='s_ts', regex=True)
+    df_annotation = df_annotation.replace(to_replace='s_ts2', value='s_ts', regex=True)
+    df_annotation = df_annotation.replace(to_replace='s_tp1', value='s_tp', regex=True)
+    df_annotation = df_annotation.replace(to_replace='s_tp2', value='s_tp', regex=True)
+    df_annotation = df_annotation.replace(to_replace='s_as1', value='s_as', regex=True)
+    df_annotation = df_annotation.replace(to_replace='s_as2', value='s_as', regex=True)
     solocounter = 5
 
     # parsed solo instruments from all waves
-    for cur_index, cur_annotation in cur_annotation.iterrows():
+    for cur_index, cur_annotation in df_annotation.iterrows():
         cur_annotation_label_list = '' if isinstance(cur_annotation[3], float) else cur_annotation[3]
         cur_annotation_label_list = cur_annotation_label_list.split(',')
         cur_theme = cur_annotation[2]
         soloinstruments = [cur_instr for cur_instr in cur_annotation_label_list if "s_" in cur_instr]
+        colors = [255, 255, 255]
         if cur_theme.startswith('solo'):
             cur_theme_nr = solocounter
             solocounter = solocounter + 1
@@ -101,14 +103,16 @@ def plot_annotations(cur_annotation, path_instrument_images, axes=None):
         elif cur_theme.startswith('silence'):
             cur_theme_nr = 4
             nr_instruments = 0
-            colors = [255, 255, 255]
             colors = np.divide(colors, 255)
+
+        # scale to [0,1]
 
         axes.add_patch(
             patches.Rectangle(
-                (cur_annotation.region_start, 0),   # (x,y)
-                cur_annotation.region_end-cur_annotation.region_start,       # width
-                1, facecolor=colors,
+                (cur_annotation.segment_start, 0),   # (x,y)
+                cur_annotation.segment_end-cur_annotation.segment_start,  # width
+                1,
+                facecolor=colors,
                 edgecolor='black'
             )
         )
@@ -116,47 +120,47 @@ def plot_annotations(cur_annotation, path_instrument_images, axes=None):
         # list with all solo instruments
         row_nr = 2
         seg_height = 0.33
-        box_mid = cur_annotation.region_start + (cur_annotation.region_end-cur_annotation.region_start)/2
-        x_pos_even = cur_annotation.region_start + (cur_annotation.region_end-cur_annotation.region_start)/4
-        x_pos_uneven = cur_annotation.region_start + 3*(cur_annotation.region_end-cur_annotation.region_start)/4
+        box_mid = cur_annotation.segment_start + (cur_annotation.segment_end-cur_annotation.segment_start)/2
+        x_pos_even = cur_annotation.segment_start + (cur_annotation.segment_end-cur_annotation.segment_start)/4
+        x_pos_uneven = cur_annotation.segment_start + 3*(cur_annotation.segment_end-cur_annotation.segment_start)/4
         soloinstruments = [0]
 
         y_pos_stat = (1-seg_height)/(np.ceil(nr_instruments/row_nr)+1)
         # load instrument pictograms
-        # print(int(0.9*(cur_annotation.region_end-cur_annotation.region_start)))
+        # print(int(0.9*(cur_annotation.segment_end-cur_annotation.segment_start)))
         size_image = 30
-        if int(cur_annotation.region_end-cur_annotation.region_start) < 30:
-            size_image = int(0.9*(cur_annotation.region_end-cur_annotation.region_start))
+        if int(cur_annotation.segment_end-cur_annotation.segment_start) < 30:
+            size_image = int(0.9*(cur_annotation.segment_end-cur_annotation.segment_start))
         size_image_y = size_image
         if len(cur_annotation_label_list) > 0 and cur_theme_nr != 4:
             if cur_theme_nr == 3:
-                img = scipy.misc.imread(os.path.join(path_instrument_images, 'letter-t.png'), mode='RGBA')
+                # img = plt.imread(os.path.join(path_instrument_images, 'letter-t.png'))#, mode='RGBA')
+                img = Image.open(os.path.join(path_instrument_images, 'letter-t.png'))#, mode='RGBA')
                 size_image = 25
                 size_image_y = int(1.1*size_image)
             elif cur_theme_nr == 1:
-                img = scipy.misc.imread(os.path.join(path_instrument_images, 'letter-i.png'), mode='RGBA')
+                img = Image.open(os.path.join(path_instrument_images, 'letter-i.png'), mode='RGBA')
                 size_image = 5
                 size_image_y = 30
             elif cur_theme_nr == 2:
                 size_image = 25
                 size_image_y = size_image
-                img = scipy.misc.imread(os.path.join(path_instrument_images, 'letter-o.png'), mode='RGBA')
+                img = Image.open(os.path.join(path_instrument_images, 'letter-o.png'), mode='RGBA')
             else:
                 soloinstruments = [cur_instr for cur_instr in cur_annotation_label_list if "s_" in cur_instr]
-                img = scipy.misc.imread(os.path.join(path_instrument_images, cur_annotation_label_list[0][2:] + '.png'))
+                img = Image.open(os.path.join(path_instrument_images, cur_annotation_label_list[0][2:] + '.png'))
                 if len(soloinstruments) > 1:
                     for ii in range(len(soloinstruments)):
                         seg_height = 0.5
                         y_pos_stat2 = (1-seg_height)/(np.ceil(len(soloinstruments)/row_nr)+1)
-                        img = scipy.misc.imread(os.path.join(path_instrument_images, cur_annotation_label_list[ii][2:] + '.png'),
-                                                 mode='RGBA')
-                        size_image = int(0.8*(cur_annotation.region_end-cur_annotation.region_start)/row_nr)
+                        img = Image.open(os.path.join(path_instrument_images, cur_annotation_label_list[ii][2:] + '.png')) #, mode='RGBA')
+                        size_image = int(0.8*(cur_annotation.segment_end-cur_annotation.segment_start)/row_nr)
                         size_image_y = size_image
                         if size_image < 1:
                             size_image = 1
                             size_image_y = 1
-                        img = scipy.misc.imresize(img, (size_image, size_image))
-                        imagebox = OffsetImage(img)
+                        img = img.resize((size_image, size_image))
+                        imagebox = OffsetImage(np.asarray(img))
                         x_pos = x_pos_uneven if np.mod((ii+1), 2) == 0 else x_pos_even
                         y_pos = ((1)-y_pos_stat2*np.ceil((ii+1)/row_nr))
                         # print(y_pos)
@@ -165,13 +169,13 @@ def plot_annotations(cur_annotation, path_instrument_images, axes=None):
                                             xybox=(0., 0.),
                                             xycoords='data',
                                             boxcoords="offset points",
-                                            bboxprops=dict(facecolor='none', boxstyle='round', color='none'))
-                        axes.add_artist(ab)
+                                            bboxprops=dict(color='none', facecolor='none', boxstyle='round'))
+                        axes.add_artist(ab)  # todo too big
 
             # old value:70
-            # if int(cur_annotation.region_end-cur_annotation.region_start) < 100:
-            #     # size_image = int(1.2*(cur_annotation.region_end-cur_annotation.region_start))
-            #     size_image = int(1*(cur_annotation.region_end-cur_annotation.region_start))
+            # if int(cur_annotation.segment_end-cur_annotation.segment_start) < 100:
+            #     # size_image = int(1.2*(cur_annotation.segment_end-cur_annotation.segment_start))
+            #     size_image = int(1*(cur_annotation.segment_end-cur_annotation.segment_start))
             # print(len(soloinstruments))
             if size_image < 1:
                 size_image = 1
@@ -180,17 +184,17 @@ def plot_annotations(cur_annotation, path_instrument_images, axes=None):
             if len(soloinstruments) == 1:
                 #
                 # if cur_theme_nr == 1:
-                #     size_image = int(0.9*(cur_annotation.region_end-cur_annotation.region_start))
+                #     size_image = int(0.9*(cur_annotation.segment_end-cur_annotation.segment_start))
 
-                img = scipy.misc.imresize(img, (size_image_y, size_image))
-                imagebox = OffsetImage(img)
+                img = img.resize((size_image_y, size_image))
+                imagebox = OffsetImage(np.asarray(img))
                 xy = [box_mid, 1-(seg_height/2)]               # coordinates to position this image
 
                 ab = AnnotationBbox(imagebox, xy,
                                     xybox=(0., 0.),
                                     xycoords='data',
                                     boxcoords="offset points",
-                                    bboxprops=dict(facecolor='none', boxstyle='round', color='none'))
+                                    bboxprops=dict(color='none', facecolor='none', boxstyle='round'))
                 axes.add_artist(ab)
 
         for i in range(nr_instruments-len(soloinstruments)+1):
@@ -205,15 +209,15 @@ def plot_annotations(cur_annotation, path_instrument_images, axes=None):
                 instrument = instrument.replace('_', '')
                 instrument = instrument.replace('1', '')
                 instrument = instrument.replace('2', '')
-                img = scipy.misc.imread(path_instrument_images + '/' + instrument + '.png', mode='RGBA')
+                img = Image.open(path_instrument_images + '/' + instrument + '.png')
                 # size_image= 30
-                # if int((cur_annotation.region_end-cur_annotation.region_start)/row_nr) < 100/row_nr:
-                size_image = int(0.8*(cur_annotation.region_end-cur_annotation.region_start)/row_nr)
+                # if int((cur_annotation.segment_end-cur_annotation.segment_start)/row_nr) < 100/row_nr:
+                size_image = int(0.8*(cur_annotation.segment_end-cur_annotation.segment_start)/row_nr)
                 if size_image < 1:
                     size_image = 1
                     size_image_y = 1
-                img = scipy.misc.imresize(img, (size_image, size_image))
-                imagebox = OffsetImage(img)
+                img = img.resize((size_image, size_image))
+                imagebox = OffsetImage(np.asarray(img))
                 x_pos = x_pos_uneven if np.mod((i+1), 2) == 0 else x_pos_even
                 y_pos = (1-seg_height)-y_pos_stat*np.ceil((i+1)/row_nr)
 
@@ -222,11 +226,11 @@ def plot_annotations(cur_annotation, path_instrument_images, axes=None):
                                     xybox=(0., 0.),
                                     xycoords='data',
                                     boxcoords="offset points",
-                                    bboxprops=dict(facecolor='none', boxstyle='round', color='none'))
+                                    bboxprops=dict(color='none', facecolor='none', boxstyle='round'))
                 axes.add_artist(ab)
 
     axes.axes.get_yaxis().set_visible(False)
-    axes.set_xlim([0, cur_annotation.tail().region_end])
+    axes.set_xlim([0, cur_annotation.tail().segment_end])
 
     return axes
 
