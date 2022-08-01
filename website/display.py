@@ -16,7 +16,9 @@ from PIL import Image
 
 
 def colorbar_ct():
-    # exponential colormap5 copied from matlab toolbox
+    """
+    Exponential `colormap5` copied from Matlab SSM-toolbox
+    """
     x = 50
     y = (np.power(x, np.arange(0.0, 1.0, 0.01)) - 1) / (x - 1)
     colors_ct = 1 - np.array([y, y, y]).transpose()
@@ -26,6 +28,8 @@ def colorbar_ct():
 
 
 def ssmshow(ssm, axes='', cmap='ct'):
+    """Helper function to show an SSM.
+    """
     if cmap == 'ct':
         cmap = colorbar_ct()
 
@@ -36,6 +40,8 @@ def ssmshow(ssm, axes='', cmap='ct'):
 
 
 def ncshow(nc, peaks, axes=''):
+    """Helper function to show a Novelty Curve.
+    """
 
     axes.plot(nc)
     axes.set_xlim([0, len(nc)])
@@ -46,6 +52,7 @@ def ncshow(nc, peaks, axes=''):
 
 
 def solo_colormap(instrument, solo_nr):
+    """Helper function to map solo instruments to categorical colors."""
 
     solo_instrument_list = ['s_tp', 's_as', 's_key', 's_b', 's_vib', 's_voc',
                             's_dr', 's_g', 's_fln', 's_cor', 's_bs', 's_cl',
@@ -61,7 +68,7 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
     # loop over rows in pandas DataFrame and add rectangles
     # solos start at color 5
 
-    #  SPAGETHI CODE DO NOT TOUCH !!!
+    #  Normalize instrument names
     df_annotation = df_annotation.replace(to_replace='s_ts1', value='s_ts', regex=True)
     df_annotation = df_annotation.replace(to_replace='s_ts2', value='s_ts', regex=True)
     df_annotation = df_annotation.replace(to_replace='s_tp1', value='s_tp', regex=True)
@@ -134,8 +141,7 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
         size_image_y = size_image
         if len(cur_annotation_label_list) > 0 and cur_theme_nr != 4:
             if cur_theme_nr == 3:
-                # img = plt.imread(os.path.join(path_instrument_images, 'letter-t.png'))#, mode='RGBA')
-                img = Image.open(os.path.join(path_instrument_images, 'letter-t.png'))#, mode='RGBA')
+                img = Image.open(os.path.join(path_instrument_images, 'letter-t.png'))
                 size_image = 25
                 size_image_y = int(1.1*size_image)
             elif cur_theme_nr == 1:
@@ -153,7 +159,7 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
                     for ii in range(len(soloinstruments)):
                         seg_height = 0.5
                         y_pos_stat2 = (1-seg_height)/(np.ceil(len(soloinstruments)/row_nr)+1)
-                        img = Image.open(os.path.join(path_instrument_images, cur_annotation_label_list[ii][2:] + '.png')) #, mode='RGBA')
+                        img = Image.open(os.path.join(path_instrument_images, cur_annotation_label_list[ii][2:] + '.png'))
                         size_image = int(0.8*(cur_annotation.segment_end-cur_annotation.segment_start)/row_nr)
                         size_image_y = size_image
                         if size_image < 1:
@@ -164,28 +170,19 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
                         x_pos = x_pos_uneven if np.mod((ii+1), 2) == 0 else x_pos_even
                         y_pos = ((1)-y_pos_stat2*np.ceil((ii+1)/row_nr))
                         # print(y_pos)
-                        xy = [x_pos, y_pos]               # coordinates to position this image
+                        xy = [x_pos, y_pos]  # coordinates to position this image
                         ab = AnnotationBbox(imagebox, xy,
                                             xybox=(0., 0.),
                                             xycoords='data',
-                                            boxcoords="offset points",
+                                            boxcoords='offset points',
                                             bboxprops=dict(color='none', facecolor='none', boxstyle='round'))
                         axes.add_artist(ab)  # todo too big
 
-            # old value:70
-            # if int(cur_annotation.segment_end-cur_annotation.segment_start) < 100:
-            #     # size_image = int(1.2*(cur_annotation.segment_end-cur_annotation.segment_start))
-            #     size_image = int(1*(cur_annotation.segment_end-cur_annotation.segment_start))
-            # print(len(soloinstruments))
             if size_image < 1:
                 size_image = 1
                 size_image_y = 1
-            # print(size_image)
-            if len(soloinstruments) == 1:
-                #
-                # if cur_theme_nr == 1:
-                #     size_image = int(0.9*(cur_annotation.segment_end-cur_annotation.segment_start))
 
+            if len(soloinstruments) == 1:
                 img = img.resize((size_image_y, size_image))
                 imagebox = OffsetImage(np.asarray(img))
                 xy = [box_mid, 1-(seg_height/2)]               # coordinates to position this image

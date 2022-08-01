@@ -5,24 +5,29 @@
 """
 
 import os
+import sys
 import glob
+import shutil
 import pandas as pd
 import matplotlib.pyplot as plt
-import structure_analysis
-import tqdm
 import display
 import numpy as np
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+# hacky relative import
+sys.path.append(os.path.join('..'))
+import jsd_utils
 
-def create_index_page(env, pages, path_output):
+
+def create_index_page(env, tracks, path_output):
     """Creates a simple index page, which lists the links to all track pages.
 
     Parameters
     ----------
     env : Environment
-        The jinja-environment to be used. env must already be set up with the folder containing 'index_template.html'
-    pages : list
+        The jinja-environment to be used. env must already be set up with
+        the folder containing 'index_template.html'
+    tracks : pd.DataFrame
         list of all track names combined with the track links
     path_output : str
         Path to the directory where the resulting html ('index.html') is stored
@@ -30,8 +35,9 @@ def create_index_page(env, pages, path_output):
     """
     # load template
     template = env.get_template('index.html')
+
     # render template
-    template_html = template.render(title='Overview', pages=pages)
+    template_html = template.render(title='Overview', tracks=tracks)
 
     # save website
     with open(os.path.join(path_output, 'index.html'), encoding='utf-8', mode='w') as f:
@@ -140,6 +146,50 @@ def create_track_page(env, path_anno, path_features, params_cens,
 if __name__ == '__main__':
 
     # setting global variables
+    PATH_OUTPUT = 'output_website'
+    PATH_DATA = '../data'
+    path_annotations = os.path.join(PATH_DATA, 'annotations_csv')
+    path_annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
+
+    os.makedirs(PATH_OUTPUT, exist_ok=True)
+
+    ASSETS_PATH = PATH_OUTPUT + '/assets'
+    if not os.path.exists(ASSETS_PATH):
+        shutil.copytree('assets', ASSETS_PATH)
+
+    # load the JSD
+    jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
+    tracks = jsd_track_db.groupby('track_name').size().to_frame('n_segments')
+    track_links = '/tracks/' + tracks.index + '.html'
+    tracks['tracks_names'] = tracks.index
+    tracks['duration'] = jsd_track_db.groupby('track_name').agg({'segment_end': np.max})
+
+    track_instruments = jsd_track_db.groupby('track_name')['instrument'].apply(list).dropna()
+
+    instruments_lists = []
+
+    for cur_track in track_instruments:
+        cur_track_wo_nans = [x for x in cur_track if isinstance(x, str)]
+        instruments_list = ','.join(cur_track_wo_nans)
+        instruments_list = instruments_list.replace('s_', '')
+        instruments_list = instruments_list.replace('b_', '')
+        instruments_list = instruments_list.split(',')
+        instruments_list = pd.Series(instruments_list).drop_duplicates().tolist()
+        instruments_list = ','.join(instruments_list)
+
+        instruments_lists.append(instruments_list)
+
+    tracks['instruments_list'] = instruments_lists
+
+    # setting up jinja environment
+    PATH = os.path.dirname(os.path.abspath(__file__))
+    template_env = Environment(loader=FileSystemLoader(os.path.join(PATH, 'templates')),
+                               autoescape=select_autoescape(['html', 'xml']))
+
+    create_index_page(template_env, tracks, PATH_OUTPUT)
+    # breakpoint()
+    """
+    # setting global variables
     path_output = 'output'
     path_data = 'data'
     path_tracks = os.path.join(path_data, 'audio_wjd_mp3')
@@ -152,10 +202,6 @@ if __name__ == '__main__':
     feature_rate = 10
     params_cens = [(9, 2), (11, 5), (21, 5), (41, 10), (81, 10)]
 
-    # setting up jinja environment
-    PATH = os.path.dirname(os.path.abspath(__file__))
-    template_env = Environment(loader=FileSystemLoader(os.path.join(PATH, 'templates')),
-                               autoescape=select_autoescape(['html', 'xml']))
 
     # make sure the folders exist before trying to save things
     if not os.path.isdir(path_output):
@@ -175,10 +221,8 @@ if __name__ == '__main__':
         #                   kernel_size)
         try:
             create_track_page(template_env, cur_path_anno, cur_path_features, params_cens,
-                                               path_output, folder_name_plots, path_instrument_images,
-                                               feature_rate, kernel_size)
-        # except:
-        #     print(os.path.splitext(os.path.basename(cur_path_anno))[0] + ' could not be generated!')
+                              path_output, folder_name_plots, path_instrument_images,
+                              feature_rate, kernel_size)
         except Exception as e:
             print(os.path.splitext(os.path.basename(cur_path_anno))[0] + ' could not be generated!')
             print(e)
@@ -187,4 +231,4 @@ if __name__ == '__main__':
     html_files = glob.glob(os.path.join(path_output, '*.html'))
     track_names = [os.path.splitext(os.path.basename(cur_file))[0] for cur_file in html_files]
     track_links = [cur_track + '.html' for cur_track in track_names]
-    create_index_page(template_env, zip(track_names, track_links), path_output)
+    """
