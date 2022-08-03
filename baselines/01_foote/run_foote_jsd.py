@@ -28,6 +28,7 @@ def main():
 
     path_output = 'foote_evaluation'
     path_data = os.path.join('..', 'data')
+    path_eval = os.path.join(path_data, path_output)
     path_features = os.path.join(path_data, 'foote_jsd_features')
     feature_rate = 10
 
@@ -43,7 +44,8 @@ def main():
         os.mkdir(os.path.join(path_data, path_output))
 
     # call main experiment
-    eval_output = foote_utils.foote_experiment(jsd_track_db, params, thresholds, feature_rate, path_features)
+    eval_output = foote_utils.foote_experiment(jsd_track_db, params, thresholds, feature_rate,
+                                               path_features, path_eval, save_ncs=True)
 
     # evaluate on different splits
     with open('../../splits/jsd_fold-0.yml') as fh:
@@ -67,7 +69,7 @@ def main():
     eval_means['threshold'] = eval_means['threshold'].round(2)
 
     # save dataframe as csv
-    eval_means.to_csv(os.path.join(path_data, path_output, 'eval_means_jsd.csv'), sep=';')
+    eval_means.to_csv(os.path.join(path_eval, 'eval_means_jsd.csv'), sep=';')
 
     # get best thresholds on validation set
     best_thresholds = []

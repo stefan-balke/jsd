@@ -367,7 +367,7 @@ def analysis(features, params, kernel_size):
     return ssm_f_mfcc, nc_mfcc
 
 
-def foote_experiment(track_db, params, thresholds, feature_rate, path_features):
+def foote_experiment(track_db, params, thresholds, feature_rate, path_features, path_eval, save_ncs=False):
     eval_output = []
 
     # analyze and evaluate the dataset with different kernel sizes
@@ -375,6 +375,9 @@ def foote_experiment(track_db, params, thresholds, feature_rate, path_features):
         cur_kernel_size = cur_params['kernel_size']
         cur_wl_ds = cur_params['wl_ds']
         print('--> Params: {}, Kernel Size: {}'.format(cur_wl_ds, cur_kernel_size))
+
+        # output container for the novelty functions
+        nc_outputs = []
 
         # loop over all tracks
         for cur_track_name in tqdm.tqdm(track_db['track_name'].unique()):
@@ -403,6 +406,15 @@ def foote_experiment(track_db, params, thresholds, feature_rate, path_features):
 
             # analyze the audio features
             (_, nc_mfcc) = analysis(features, cur_wl_ds, cur_kernel_size)
+
+            if save_ncs:
+                cur_nc_output = {}
+                cur_nc_output['track_name'] = cur_track_name
+                cur_nc_output['wl_ds'] = cur_wl_ds
+                cur_nc_output['kernel_size'] = cur_kernel_size
+                cur_nc_output['nc'] = nc_mfcc
+
+                nc_outputs.append(cur_nc_output)
 
             # keep boundaries for visualization
             boundaries_mfcc = []
@@ -492,6 +504,11 @@ def foote_experiment(track_db, params, thresholds, feature_rate, path_features):
                 ax[1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
                 plt.show()
+
+        # save ncs
+        if save_ncs:
+            fn_nc_output = 'ncs_wl-{}_kernelsize-{}.npz'.format(cur_wl_ds, cur_kernel_size)
+            np.savez_compressed(os.path.join(path_eval, fn_nc_output), nc_outputs=nc_outputs)
 
     eval_output = pd.DataFrame(eval_output)
 
