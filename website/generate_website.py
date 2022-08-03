@@ -175,7 +175,7 @@ if __name__ == '__main__':
         instruments_list = instruments_list.replace('b_', '')
         instruments_list = instruments_list.split(',')
         instruments_list = pd.Series(instruments_list).drop_duplicates().tolist()
-        instruments_list = ','.join(instruments_list)
+        # instruments_list = ','.join(instruments_list)
 
         instruments_lists.append(instruments_list)
 

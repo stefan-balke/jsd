@@ -1,67 +1,63 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    {% block head %}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
-    <meta name="author" content="">
-
+    <meta name="author" content="Stefan Balke">
     <title>Jazz Structure Database - {% block title %}{% endblock %}</title>
-
-    <!-- Bootstrap core CSS -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="assets/css/web_motif.css" rel="stylesheet">
-    {% endblock %}
+    <link href="assets/css/jsd.css" rel="stylesheet">
   </head>
 
   <body>
-
-    <nav class="navbar navbar-toggleable-md navbar-inverse fixed-top bg-inverse">
-      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <a class="navbar-brand" href="#">JSD</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <a class="navbar-brand" href="#">JSD</a>
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
-            <a class="nav-link" href="index.html">Overview</a>
+            <a class="nav-link" href="#">About</a>
           </li>
         </ul>
       </div>
     </nav>
 
-    <!-- Main jumbotron for a primary marketing message or call to action -->
-    <div class="jumbotron">
-      <div class="container">
-        <h1 class="display-3">{{ self.title() }}</h1>
-      </div>
-    </div>
-
-    <div class="container">
+    <main role="main" class="container">
       <div class="row">
-          {% block content %}
-          {% endblock %}
+        <h1>{{ self.title() }}</h1>
+        {% block content %}
+        {% endblock %}
       </div>
-      <hr>
+    </main>
 
-      <footer>
-        <p>&copy; International Audio Laboratories Erlangen, 2022</p>
-      </footer>
-    </div> <!-- /container -->
+    <footer>
+      <p>&copy; International Audio Laboratories Erlangen, 2022</p>
+    </footer>
 
-
+    
     {% block js_assets %}
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="assets/js/jquery-3.1.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
+    <script src="assets/js/popper.min.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="assets/js/ie10-viewport-bug-workaround.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+
+    <script>
+      $(document).ready( function () {
+          var table = $("table.table").DataTable({
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]]
+          });
+          $("table.table").show();
+      });
+    </script>
+
+
     {% endblock %}
+
   </body>
 </html>

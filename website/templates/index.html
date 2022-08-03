@@ -2,21 +2,30 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<table style="width:50%">
-  <tr>
-    <th>Songname</th>
-    <th>Dur. (s)</th>
-    <th>#Seg.</th>
-    <th>Instruments</th>
-  </tr>
-{% for cur_name, cur_track in tracks.iterrows() %}
-<tr>
-  <td><a href="tracks/{{ cur_name }}.html">{{ cur_name }}</a></td>
-  <td>{{ cur_track['duration']|int }}</td>
-  <td>{{ cur_track['n_segments'] }}</td>
-  <td>{{ cur_track['instruments_list'] }}</td>
-</tr>
-{% endfor %}
-</table>
-
+<div class="container">
+  <table class="table table-striped" style="display:none">
+    <thead>
+      <tr>
+        <th>Songname</th>
+        <th>Dur. (s)</th>
+        <th>#Seg.</th>
+        <th>Instruments</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for cur_name, cur_track in tracks.iterrows() %}
+    <tr>
+      <td><a href="tracks/{{ cur_name }}.html">{{ cur_name }}</a></td>
+      <td>{{ cur_track['duration']|int }}</td>
+      <td><span class="badge badge-info">{{ cur_track['n_segments'] }}</span></td>
+      <td>
+      {% for cur_instrument in cur_track['instruments_list'] %}
+      <span class="badge badge-success">{{ cur_instrument }}</span>
+      {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}
