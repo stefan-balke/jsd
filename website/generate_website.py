@@ -44,8 +44,7 @@ def create_index_page(env, tracks, path_output):
         f.write(template_html)
 
 
-def create_track_page(env, path_anno, path_features, params_cens,
-                      path_output, folder_name_plots, path_instrument_images, feature_rate, kernel_size):
+def create_track_page(track_name, annotations, results_foote_short, path_results_cnn, path_output, template_env):
     """Creates a webpage from the given track, using a template called 'track.html',
        whose position is specified by the given Environment.
 
@@ -72,74 +71,45 @@ def create_track_page(env, path_anno, path_features, params_cens,
 
     """
 
-    # get trackname from path_anno
-    cur_track_name = os.path.splitext(os.path.basename(path_anno))[0]
-    # print trackname for debugging purposes
-    # print(cur_track_name)
-
     # load template
-    template = env.get_template('track.html')
-
-    # read annotation file
-    annotations = pd.read_csv(path_anno, usecols=[1, 2, 3, 4], sep=';')
-
-    # read features
-    features = np.load(path_features)
+    template = template_env.get_template('track.html')
 
     # create empty lists which will be appended in the loop
     path_ssms = []
     title_ssms = []
 
-    # iterate over the cens_parameter list to create a plot for each setting
-    for cur_params_cens in params_cens:
+    ##### Foote, short
+    cur_results_track_names = [x['track_name'] for x in results_foote_short]
 
-        # Analysis of the feature file with the current parameter settings
-        # calculates SSMS, NCs and peaks of NCs for CENS and MFCC
-        (ssm_f_cens, ssm_f_mfcc, nc_cens, nc_mfcc, peaks_cens, peaks_mfcc) = structure_analysis.analysis(features,
-                                                                                                         cur_params_cens,
-                                                                                                         kernel_size)
+    cur_result_idx = cur_results_track_names.index(cur_track_name)
+    nc_foote_short = results_foote_short[cur_result_idx]['nc']
+    ssm_foote_short = results_foote_short[cur_result_idx]['ssm']
+    params_foote_short = results_foote_short[cur_result_idx]['wl_ds']
+    boundaries_foote_short = results_foote_short[cur_result_idx]['boundaries']
+    # boundaries_foote_short = boundaries_foote_short * (results_foote_short[cur_result_idx]['feature_rate'] / params_foote_short[1])
 
-        # Plotting for CENS and MFCC
+    cur_title = 'Foote, short (MFCC, l=%s, d=%s)' % (params_foote_short[0], params_foote_short[1])
+    fig_ssm_f_mfcc, (ax_ssm, ax_anno, ax_nc) = display.ssmshow_annotations(ssm_foote_short,
+                                                                           annotations,
+                                                                           nc_foote_short,
+                                                                           boundaries_foote_short,
+                                                                           title=cur_title)
 
-        # CENS: Display SSM, NC with peaks and visualized annotation
-        cur_title = 'SSM (CENS, l=%s, d=%s)' % (cur_params_cens[0], cur_params_cens[1])
-        fig_ssm_f_cens, (ax_ssm, ax_anno, ax_nc) = display.ssmshow_annotations(ssm_f_cens, annotations,
-                                                                               nc_cens, peaks_cens,
-                                                                               path_instrument_images, title=cur_title)
+    fn_ssm_f_mfcc = '{}_foote_short_ssm.png'.format(track_name)
+    fig_ssm_f_mfcc.savefig(os.path.join(path_output, 'img', fn_ssm_f_mfcc), bbox_inches='tight')
+    plt.close()
 
-        # CENS: Save the plot
-        fn_ssm_f_cens = '%s_cens_l_%d_d_%d.png' % (cur_track_name, cur_params_cens[0], cur_params_cens[1])
-        fig_ssm_f_cens.savefig(os.path.join(path_output, folder_name_plots, fn_ssm_f_cens),
-                               bbox_inches='tight')
-        plt.close()
-
-        # append the path_ssms and title_ssms lists
-        path_ssms.append(os.path.join(folder_name_plots, fn_ssm_f_cens))
-        title_ssms.append(cur_title)
-
-        # MFCC: Display SSM, NC with peaks and visualized annotation
-        cur_title = 'SSM (MFCC, l=%s, d=%s)' % (cur_params_cens[0], cur_params_cens[1])
-        fig_ssm_f_mfcc, (ax_ssm, ax_anno, ax_nc) = display.ssmshow_annotations(ssm_f_mfcc, annotations,
-                                                                               nc_mfcc, peaks_mfcc,
-                                                                               path_instrument_images, title=cur_title)
-        plt.close()
-        # MFCC: Save the plot
-        fn_ssm_f_mfcc = '%s_mfcc_l_%d_d_%d.png' % (cur_track_name, cur_params_cens[0], cur_params_cens[1])
-        fig_ssm_f_mfcc.savefig(os.path.join(path_output, folder_name_plots, fn_ssm_f_mfcc),
-                               bbox_inches='tight')
-        plt.close()
-
-        # append the path_ssms and title_ssms lists
-        path_ssms.append(os.path.join(folder_name_plots, fn_ssm_f_mfcc))
-        title_ssms.append(cur_title)
+    # append the path_ssms and title_ssms lists
+    path_ssms.append(os.path.join('img', fn_ssm_f_mfcc))
+    title_ssms.append(cur_title)
 
     # render template
-    template_html = template.render(title=cur_track_name, path_ssms=path_ssms, title_ssms=title_ssms,
-                                    path_track=os.path.join('../', path_data, 'audio_wjd_mp3',
-                                                            cur_track_name + '.mp3'))
+    path_track = os.path.join('../', 'data', 'audio_wjd_mp3', track_name + '.mp3')
+    template_html = template.render(title=track_name, path_ssms=path_ssms, title_ssms=title_ssms,
+                                    path_track=path_track)
 
     # save website
-    with open(os.path.join(path_output, cur_track_name + '.html'), encoding='utf-8', mode='w') as f:
+    with open(os.path.join(path_output, track_name + '.html'), encoding='utf-8', mode='w') as f:
         f.write(template_html)
 
 
@@ -148,10 +118,15 @@ if __name__ == '__main__':
     # setting global variables
     PATH_OUTPUT = 'output_website'
     PATH_DATA = '../data'
+    PATH_OUTPUT_IMAGES = os.path.join(PATH_OUTPUT, 'img')
     path_annotations = os.path.join(PATH_DATA, 'annotations_csv')
     path_annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
+    path_eval = os.path.join('..', 'baselines', 'data')
+    path_results_foote = os.path.join(path_eval, 'foote_evaluation')
+    path_results_cnn = os.path.join(path_eval, 'cnn_evaluation')
 
     os.makedirs(PATH_OUTPUT, exist_ok=True)
+    os.makedirs(PATH_OUTPUT_IMAGES, exist_ok=True)
 
     ASSETS_PATH = PATH_OUTPUT + '/assets'
     if not os.path.exists(ASSETS_PATH):
@@ -175,7 +150,6 @@ if __name__ == '__main__':
         instruments_list = instruments_list.replace('b_', '')
         instruments_list = instruments_list.split(',')
         instruments_list = pd.Series(instruments_list).drop_duplicates().tolist()
-        # instruments_list = ','.join(instruments_list)
 
         instruments_lists.append(instruments_list)
 
@@ -186,31 +160,24 @@ if __name__ == '__main__':
     template_env = Environment(loader=FileSystemLoader(os.path.join(PATH, 'templates')),
                                autoescape=select_autoescape(['html', 'xml']))
 
+    # overview page
     create_index_page(template_env, tracks, PATH_OUTPUT)
-    # breakpoint()
+
+    # track pages
+    path_results_foote_short = os.path.join(path_results_foote, 'ncs_wl-(9, 4)_kernelsize-40.npz')
+    results_foote_short = np.load(path_results_foote_short, allow_pickle=True)['nc_outputs']
+
+    for cur_track_name, _ in tracks.iterrows():
+        cur_annotations = jsd_track_db[jsd_track_db['track_name'] == cur_track_name]
+
+        try:
+            create_track_page(cur_track_name, cur_annotations, results_foote_short,
+                              path_results_cnn, PATH_OUTPUT, template_env)
+        except Exception as e:
+            print('{} could not be generated!'.format(cur_track_name))
+            print(e)
+
     """
-    # setting global variables
-    path_output = 'output'
-    path_data = 'data'
-    path_tracks = os.path.join(path_data, 'audio_wjd_mp3')
-    path_features = os.path.join(path_data, 'features_wjd')
-    path_annotations = os.path.join(path_data, 'anno_wjd')
-    path_instrument_images = os.path.join(path_data, 'instrument_images')
-    annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
-    folder_name_plots = 'plots_structure'
-    kernel_size = 50
-    feature_rate = 10
-    params_cens = [(9, 2), (11, 5), (21, 5), (41, 10), (81, 10)]
-
-
-    # make sure the folders exist before trying to save things
-    if not os.path.isdir(path_output):
-        os.mkdir(path_output)
-    if not os.path.isdir(os.path.join(path_output, folder_name_plots)):
-        os.mkdir(os.path.join(path_output, folder_name_plots))
-
-    # render templates
-    # create_index_page(template_env, zip(track_names, track_links), path_output)
 
     # create a webpage for each track by iterating over all tracks
     for cur_path_anno in tqdm.tqdm(annotation_files):

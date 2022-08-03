@@ -325,19 +325,10 @@ def analysis(features, params, kernel_size):
 
     Returns
     -------
-    ssm_f_cens : np.array
-        SSM computed with CENS features
     ssm_f_mfcc : np.array
         SSM computed with MFCC features
-    nc_cens : np.array
-        NC computed for SSM based on CENS features
     nc_mfcc : np.array
         NC computed for SSM based on MFCC features
-    boundaries_cens : np.array
-        Array containing the peaks of the NC based on CENS features
-    boundaries_mfcc : np.array
-        Array containing the peaks of the NC based on MFCC features
-
     """
 
     # read features and abolish first two bands
@@ -405,16 +396,7 @@ def foote_experiment(track_db, params, thresholds, feature_rate, path_features, 
             features = np.load(cur_path_features)
 
             # analyze the audio features
-            (_, nc_mfcc) = analysis(features, cur_wl_ds, cur_kernel_size)
-
-            if save_ncs:
-                cur_nc_output = {}
-                cur_nc_output['track_name'] = cur_track_name
-                cur_nc_output['wl_ds'] = cur_wl_ds
-                cur_nc_output['kernel_size'] = cur_kernel_size
-                cur_nc_output['nc'] = nc_mfcc
-
-                nc_outputs.append(cur_nc_output)
+            (ssm_mfcc, nc_mfcc) = analysis(features, cur_wl_ds, cur_kernel_size)
 
             # keep boundaries for visualization
             boundaries_mfcc = []
@@ -505,7 +487,19 @@ def foote_experiment(track_db, params, thresholds, feature_rate, path_features, 
 
                 plt.show()
 
-        # save ncs
+            # save ncs
+            if save_ncs:
+                cur_nc_output = {}
+                cur_nc_output['track_name'] = cur_track_name
+                cur_nc_output['wl_ds'] = cur_wl_ds
+                cur_nc_output['kernel_size'] = cur_kernel_size
+                cur_nc_output['nc'] = nc_mfcc
+                cur_nc_output['ssm'] = ssm_mfcc
+                cur_nc_output['boundaries'] = boundaries_mfcc[0]
+                cur_nc_output['feature_rate'] = feature_rate
+
+                nc_outputs.append(cur_nc_output)
+
         if save_ncs:
             fn_nc_output = 'ncs_wl-{}_kernelsize-{}.npz'.format(cur_wl_ds, cur_kernel_size)
             np.savez_compressed(os.path.join(path_eval, fn_nc_output), nc_outputs=nc_outputs)

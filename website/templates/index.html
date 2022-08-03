@@ -15,7 +15,7 @@
     <tbody>
     {% for cur_name, cur_track in tracks.iterrows() %}
     <tr>
-      <td><a href="tracks/{{ cur_name }}.html">{{ cur_name }}</a></td>
+      <td><a href="{{ cur_name }}.html">{{ cur_name }}</a></td>
       <td>{{ cur_track['duration']|int }}</td>
       <td><span class="badge badge-info">{{ cur_track['n_segments'] }}</span></td>
       <td>

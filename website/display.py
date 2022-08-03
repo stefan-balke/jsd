@@ -42,10 +42,8 @@ def ssmshow(ssm, axes='', cmap='ct'):
 def ncshow(nc, peaks, axes=''):
     """Helper function to show a Novelty Curve.
     """
-
     axes.plot(nc)
     axes.set_xlim([0, len(nc)])
-    # axes.set_title('Chroma Novelty Curve')
     [axes.axvline(peak, color='r') for peak in peaks]
 
     return axes
@@ -64,7 +62,7 @@ def solo_colormap(instrument, solo_nr):
     return color
 
 
-def plot_annotations(df_annotation, path_instrument_images, axes=None):
+def plot_annotations(df_annotation, path_instrument_images='instrument_images', axes=None):
     # loop over rows in pandas DataFrame and add rectangles
     # solos start at color 5
 
@@ -84,6 +82,7 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
         cur_theme = cur_annotation[2]
         soloinstruments = [cur_instr for cur_instr in cur_annotation_label_list if "s_" in cur_instr]
         colors = [255, 255, 255]
+
         if cur_theme.startswith('solo'):
             cur_theme_nr = solocounter
             solocounter = solocounter + 1
@@ -112,8 +111,6 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
             nr_instruments = 0
             colors = np.divide(colors, 255)
 
-        # scale to [0,1]
-
         axes.add_patch(
             patches.Rectangle(
                 (cur_annotation.segment_start, 0),   # (x,y)
@@ -133,11 +130,14 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
         soloinstruments = [0]
 
         y_pos_stat = (1-seg_height)/(np.ceil(nr_instruments/row_nr)+1)
+
         # load instrument pictograms
         # print(int(0.9*(cur_annotation.segment_end-cur_annotation.segment_start)))
         size_image = 30
+    
         if int(cur_annotation.segment_end-cur_annotation.segment_start) < 30:
             size_image = int(0.9*(cur_annotation.segment_end-cur_annotation.segment_start))
+
         size_image_y = size_image
         if len(cur_annotation_label_list) > 0 and cur_theme_nr != 4:
             if cur_theme_nr == 3:
@@ -145,13 +145,13 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
                 size_image = 25
                 size_image_y = int(1.1*size_image)
             elif cur_theme_nr == 1:
-                img = Image.open(os.path.join(path_instrument_images, 'letter-i.png'), mode='RGBA')
-                size_image = 5
-                size_image_y = 30
+                img = Image.open(os.path.join(path_instrument_images, 'letter-i.png'))
+                size_image = 25
+                size_image_y = int(0.5*size_image)
             elif cur_theme_nr == 2:
                 size_image = 25
                 size_image_y = size_image
-                img = Image.open(os.path.join(path_instrument_images, 'letter-o.png'), mode='RGBA')
+                img = Image.open(os.path.join(path_instrument_images, 'letter-o.png'))
             else:
                 soloinstruments = [cur_instr for cur_instr in cur_annotation_label_list if "s_" in cur_instr]
                 img = Image.open(os.path.join(path_instrument_images, cur_annotation_label_list[0][2:] + '.png'))
@@ -162,14 +162,17 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
                         img = Image.open(os.path.join(path_instrument_images, cur_annotation_label_list[ii][2:] + '.png'))
                         size_image = int(0.8*(cur_annotation.segment_end-cur_annotation.segment_start)/row_nr)
                         size_image_y = size_image
+
                         if size_image < 1:
                             size_image = 1
                             size_image_y = 1
+
                         img = img.resize((size_image, size_image))
                         imagebox = OffsetImage(np.asarray(img))
+
                         x_pos = x_pos_uneven if np.mod((ii+1), 2) == 0 else x_pos_even
                         y_pos = ((1)-y_pos_stat2*np.ceil((ii+1)/row_nr))
-                        # print(y_pos)
+
                         xy = [x_pos, y_pos]  # coordinates to position this image
                         ab = AnnotationBbox(imagebox, xy,
                                             xybox=(0., 0.),
@@ -195,9 +198,7 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
                 axes.add_artist(ab)
 
         for i in range(nr_instruments-len(soloinstruments)+1):
-
             if cur_annotation_label_list[i] != []:
-
                 if cur_theme_nr < 4:
                     instrument = cur_annotation_label_list[i]
                 else:
@@ -210,15 +211,17 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
                 # size_image= 30
                 # if int((cur_annotation.segment_end-cur_annotation.segment_start)/row_nr) < 100/row_nr:
                 size_image = int(0.8*(cur_annotation.segment_end-cur_annotation.segment_start)/row_nr)
+
                 if size_image < 1:
                     size_image = 1
                     size_image_y = 1
+
                 img = img.resize((size_image, size_image))
                 imagebox = OffsetImage(np.asarray(img))
                 x_pos = x_pos_uneven if np.mod((i+1), 2) == 0 else x_pos_even
                 y_pos = (1-seg_height)-y_pos_stat*np.ceil((i+1)/row_nr)
 
-                xy = [x_pos, y_pos]               # coordinates to position this image
+                xy = [x_pos, y_pos]  # coordinates to position this image
                 ab = AnnotationBbox(imagebox, xy,
                                     xybox=(0., 0.),
                                     xycoords='data',
@@ -227,12 +230,12 @@ def plot_annotations(df_annotation, path_instrument_images, axes=None):
                 axes.add_artist(ab)
 
     axes.axes.get_yaxis().set_visible(False)
-    axes.set_xlim([0, cur_annotation.tail().segment_end])
+    axes.set_xlim([0, df_annotation.tail(1).segment_end.values[0]])
 
     return axes
 
 
-def ssmshow_annotations(ssm, annotations, nc, peaks, path_instrument_images, title=None):
+def ssmshow_annotations(ssm, annotations, nc, peaks, path_instrument_images='instrument_images', title=None):
     fig = plt.figure(figsize=(15/1.3, 17/1.3))
     gs = gridspec.GridSpec(11, 4)
     gs.update(wspace=0.025, hspace=0.05)  # set the spacing between axes.
