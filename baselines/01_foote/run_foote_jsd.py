@@ -26,7 +26,7 @@ def main():
     path_annotation_files = glob.glob(os.path.join(path_annotations, '*.csv'))
     jsd_track_db = jsd_utils.load_jsd(path_annotation_files)
 
-    path_output = 'foote_evaluation'
+    path_output = 'foote_jsd_website'
     path_data = os.path.join('..', 'data')
     path_eval = os.path.join(path_data, path_output)
     path_features = os.path.join(path_data, 'foote_jsd_features')

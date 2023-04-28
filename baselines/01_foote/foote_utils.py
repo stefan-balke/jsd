@@ -358,7 +358,7 @@ def analysis(features, params, kernel_size):
     return ssm_f_mfcc, nc_mfcc
 
 
-def foote_experiment(track_db, params, thresholds, feature_rate, path_features, path_eval, save_ncs=False):
+def foote_experiment(track_db, params, thresholds, feature_rate, path_features, path_eval=None, save_ncs=False):
     eval_output = []
 
     # analyze and evaluate the dataset with different kernel sizes

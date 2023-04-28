@@ -31,7 +31,6 @@ This repository contains the annotations and reference implementations for the b
 * `data/annotations_sv`: Original annotation files. Can be opened with SonicVisualiser.
 * `data/annotations_raw`: Direct export from SonicVisualiser into a textual format.
 * `data/annotations_csv`: Final annotations in CSV format.
-* `data/annotations_jams`: Final annotations in Jams format.
 
 ## Usage
 

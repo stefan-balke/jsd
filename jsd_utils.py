@@ -206,20 +206,21 @@ def flag_non_musical_boundaries(track_data):
     # first and last bounardy are always non-musical
     non_musical_idcs = [cur_track_data.index[0], cur_track_data.index[-1]]
 
-    # filter all boundaries to musical boundaries
+    # collect all indices to non-musical boundaries
     for cur_idx in range(1, len(cur_track_data) - 1):
         prev_segment = cur_track_data.iloc[cur_idx - 1]['label']
-        curr_segment = cur_track_data.reset_index().iloc[cur_idx]
+        curr_segment = cur_track_data.iloc[cur_idx]['label']
+        curr_segment_index = cur_track_data.reset_index().iloc[cur_idx]
         next_segment = cur_track_data.iloc[cur_idx + 1]['label']
 
         # filter trivial boundaries like silence->intro or outro->silence
         # check if surrounding segments contain music
-        if (prev_segment == 'silence') or (next_segment == 'silence') or (next_segment == 'end'):
-            non_musical_idcs.append(curr_segment['index'])
+        if (prev_segment == 'silence') or (curr_segment == 'silence') or (curr_segment == 'end'):
+            non_musical_idcs.append(curr_segment_index['index'])
 
         # non-musical segments in salami dataset
         if (prev_segment == 'z') or (next_segment == 'z'):
-            non_musical_idcs.append(curr_segment['index'])
+            non_musical_idcs.append(curr_segment_index['index'])
 
     cur_track_data.loc[cur_track_data.index.isin(non_musical_idcs), 'start_bndry_is_musical'] = 'False'
 

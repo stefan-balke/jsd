@@ -1,0 +1,9 @@
+CUDA_VISIBLE_DEVICES=0 python optimize_peak_picking.py --path_results results/20200606-191211-cnn_ismir2014_salami_short
+CUDA_VISIBLE_DEVICES=0 python dnn_testing.py --path_results results/20200606-191211-cnn_ismir2014_salami_short
+0.5 s window: F=0.371, P=0.403, R=0.403
+3.0 s window: F=0.514, P=0.443, R=0.706
+
+CUDA_VISIBLE_DEVICES=0 python optimize_peak_picking.py --path_results results/20200607-010004-cnn_ismir2014_salami_long
+CUDA_VISIBLE_DEVICES=0 python dnn_testing.py --path_results results/20200607-010004-cnn_ismir2014_salami_long
+0.5 s window: F=0.186, P=0.180, R=0.216
+3.0 s window: F=0.567, P=0.499, R=0.739
