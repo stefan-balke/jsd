@@ -3,7 +3,7 @@ segment_start;segment_end;label;instrument
 0.185759637;18.390204081;theme_01_01;cor,tb,cl,p,bjo
 18.390204081;36.501768707;theme_01_02;cor,tb,cl,p,bjo
 36.501768707;54.659773242;solo_01_01;s_tb,b_p,b_bjo
-54.659773242;72.678458049;solo_01_01;s_tb,b_p,b_bjo
+54.659773242;72.678458049;solo_01_02;s_tb,b_p,b_bjo
 72.678458049;90.743582766;solo_02_01;s_fl,b_cl,b_bjo
 90.743582766;108.855147392;solo_02_02;s_fl,b_cl,b_bjo
 108.855147392;126.688072562;solo_03_01;s_p,b_bjo
